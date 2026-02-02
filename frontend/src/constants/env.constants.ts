@@ -1,0 +1,1 @@
+export const CURRENT_AREA_ID = import.meta.env.VITE_CURRENT_AREA_ID;
