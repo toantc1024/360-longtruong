@@ -272,201 +272,46 @@ class VRTourBridge {
       `Panorama changed to: ${label} (via ${panoramaInfo.source || "unknown"})`
     );
   }
-
-  // Audio Control Functions
-  muteAllAudio() {
-    try {
-      if (!this.tour || !this.tour.player) {
-        console.warn("Tour not ready for audio control");
-        return false;
-      }
-
-      const rootPlayer = this.tour.player.getById("rootPlayer");
-      if (rootPlayer && rootPlayer.stopGlobalAudios) {
-        rootPlayer.stopGlobalAudios();
-        console.log("All audio muted");
-
-        // Notify parent window
-        window.parent.postMessage(
-          {
-            type: "audio_control",
-            payload: { action: "muted", success: true },
-          },
-          "*"
-        );
-        return true;
-      } else {
-        console.error("stopGlobalAudios method not available");
-        return false;
-      }
-    } catch (error) {
-      console.error("Error muting audio:", error);
-
-      // Notify parent window of error
-      window.parent.postMessage(
-        {
-          type: "audio_control",
-          payload: { action: "mute_error", error: error.message },
-        },
-        "*"
-      );
-      return false;
-    }
-  }
-
-  unmuteAllAudio() {
-    try {
-      if (!this.tour || !this.tour.player) {
-        console.warn("Tour not ready for audio control");
-        return false;
-      }
-
-      const rootPlayer = this.tour.player.getById("rootPlayer");
-      if (rootPlayer && rootPlayer.resumeGlobalAudios) {
-        rootPlayer.resumeGlobalAudios();
-        console.log("All audio unmuted");
-
-        // Notify parent window
-        window.parent.postMessage(
-          {
-            type: "audio_control",
-            payload: { action: "unmuted", success: true },
-          },
-          "*"
-        );
-        return true;
-      } else {
-        console.error("resumeGlobalAudios method not available");
-        return false;
-      }
-    } catch (error) {
-      console.error("Error unmuting audio:", error);
-
-      // Notify parent window of error
-      window.parent.postMessage(
-        {
-          type: "audio_control",
-          payload: { action: "unmute_error", error: error.message },
-        },
-        "*"
-      );
-      return false;
-    }
-  }
-
-  // Additional method to stop all audio (stronger than pause)
-  stopAllAudio() {
-    try {
-      if (!this.tour || !this.tour.player) {
-        console.warn("Tour not ready for audio control");
-        return false;
-      }
-
-      const rootPlayer = this.tour.player.getById("rootPlayer");
-      if (rootPlayer && rootPlayer.stopGlobalAudios) {
-        rootPlayer.stopGlobalAudios();
-        console.log("All audio stopped");
-
-        // Notify parent window
-        window.parent.postMessage(
-          {
-            type: "audio_control",
-            payload: { action: "stopped", success: true },
-          },
-          "*"
-        );
-        return true;
-      } else {
-        console.error("stopGlobalAudios method not available");
-        return false;
-      }
-    } catch (error) {
-      console.error("Error stopping audio:", error);
-
-      // Notify parent window of error
-      window.parent.postMessage(
-        {
-          type: "audio_control",
-          payload: { action: "stop_error", error: error.message },
-        },
-        "*"
-      );
-      return false;
-    }
-  }
-
-  // Get current audio state
-  getAudioState() {
-    try {
-      if (!this.tour || !this.tour.player) {
-        return { available: false, error: "Tour not ready" };
-      }
-
-      const rootPlayer = this.tour.player.getById("rootPlayer");
-      if (rootPlayer) {
-        // Check if there are any global audios currently playing
-        const hasCurrentAudios =
-          window.currentGlobalAudios &&
-          Object.keys(window.currentGlobalAudios).length > 0;
-
-        const hasPausedAudios =
-          window.pausedAudiosLIFO && window.pausedAudiosLIFO.length > 0;
-
-        return {
-          available: true,
-          hasCurrentAudios,
-          hasPausedAudios,
-          methods: {
-            pauseGlobalAudios:
-              typeof rootPlayer.pauseGlobalAudios === "function",
-            resumeGlobalAudios:
-              typeof rootPlayer.resumeGlobalAudios === "function",
-            stopGlobalAudios: typeof rootPlayer.stopGlobalAudios === "function",
-          },
-        };
-      }
-
-      return { available: false, error: "Root player not found" };
-    } catch (error) {
-      return { available: false, error: error.message };
-    }
-  }
 }
 
 // Initialize the bridge
 window.vrTourBridge = new VRTourBridge();
 
-// Listen for audio control messages from parent window
-window.addEventListener("message", function (event) {
-  if (event.data && event.data.type === "audio_control_command") {
-    const { action } = event.data.payload || {};
+window.addEventListener("DOMContentLoaded", function () {
+  // Step 1: Find the "Enable audio?" span by content
+  function findEnableAudioSpan() {
+    const elements = document.querySelectorAll("span");
+    for (const el of elements) {
+      const normalizedText = el.textContent.replace(/\s+/g, " ").trim();
+      if (normalizedText === "Enable audio?") {
+        return el;
+      }
+    }
+    return null;
+  }
 
-    switch (action) {
-      case "mute":
-        window.vrTourBridge.muteAllAudio();
-        break;
-      case "unmute":
-        window.vrTourBridge.unmuteAllAudio();
-        break;
-      case "stop":
-        window.vrTourBridge.stopAllAudio();
-        break;
-      case "get_state":
-        const state = window.vrTourBridge.getAudioState();
-        window.parent.postMessage(
-          {
-            type: "audio_state_response",
-            payload: state,
-          },
-          "*"
-        );
-        break;
-      default:
-        console.warn("Unknown audio control action:", action);
+  // Step 2: Get the target span and navigate to root
+  const target = findEnableAudioSpan();
+  console.log("Step 1: Found Enable audio span element");
+
+  let root =
+    target.parentElement.parentElement.parentElement.parentElement.parentElement
+      .parentElement;
+  console.log("Step 2: Found root element");
+
+  // Step 3: Find all buttons with tdvClass="Button"
+  const buttons = root.querySelectorAll('div[tdvclass="Button"]');
+  console.log("Step 3: Found buttons:", buttons.length);
+
+  // Step 4: Look for YES button and click it
+  for (const btn of buttons) {
+    const text = btn.textContent.replace(/\s+/g, " ").trim();
+    console.log(`Button text: "${text}"`);
+    if (text === "YES") {
+      console.log("Step 4: Found YES button, clicking it");
+      btn.click();
+      break;
     }
   }
-});
-
-window.addEventListener("DOMContentLoaded", function () {
   console.log("3DVista Bridge is ready");
 });

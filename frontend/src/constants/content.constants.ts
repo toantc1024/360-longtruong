@@ -5,9 +5,9 @@
 
 // Site Info
 export const SITE_INFO = {
-  name: "360 Di Tích Lịch Sử",
-  shortName: "360 DTLS",
-  domain: "360ditichlichsu.yhcmute.com",
+  name: "Long Trường VR",
+  shortName: "Long Trường VR",
+  domain: "longtruong.yhcmute.com",
   technology: "VR",
 };
 
@@ -15,9 +15,9 @@ export const SITE_INFO = {
 export const HERO_CONTENT = {
   badge: "Công nghệ",
   badgeHighlight: "VR",
-  title: "Bản đồ số",
-  titleHighlight: "Di tích Lịch sử 360",
-  subtitle: "Khám phá truyền thống - Lịch sử - văn hoá bằng Công nghệ Số.",
+  title: "Long Trường VR",
+  titleHighlight: "Khám phá Long Trường 360°",
+  subtitle: "Trải nghiệm thực tế ảo phường Long Trường - Khám phá lịch sử, văn hoá và di tích bằng Công nghệ Số.",
   buttons: {
     start: "Bắt đầu",
     game: "Trò chơi Lịch sử",
@@ -31,14 +31,14 @@ export const HERO_CONTENT = {
 // About Section - Bento Grid Features
 export const ABOUT_FEATURES = {
   digitization: {
-    name: "Số hóa thông tin lịch sử",
+    name: "Số hóa thông tin Long Trường",
     description:
-      "Toàn bộ dữ liệu về địa chỉ đỏ, nhân vật, sự kiện được số hóa, dễ dàng tra cứu và chính xác.",
+      "Toàn bộ dữ liệu về các di tích, địa điểm lịch sử tại phường Long Trường được số hóa, dễ dàng tra cứu và chính xác.",
   },
   locations: {
     name: "Khám phá địa điểm nổi bật",
     description:
-      "Dữ liệu của các địa chỉ đỏ nổi bật trong khu vực một cách chính xác và đầy đủ.",
+      "Các địa điểm lịch sử, văn hoá nổi bật tại Long Trường được cập nhật đầy đủ và chính xác.",
   },
   technology: {
     name: "Công nghệ tiên tiến",
