@@ -22,26 +22,26 @@ export default function AssetDrawerBlock({
                 'overflow-hidden': snap !== 1,
             })}
         >
-            <Drawer.Title className="px-4 text-2xl text-white mt-2 font-medium">
+            <Drawer.Title className="px-4 text-2xl md:text-3xl text-white mt-2 font-bold">
                 {currentAsset?.title}
             </Drawer.Title>
 
             {/* Asset Image */}
-            <div className="flex flex-col flex-reverse md:flex-row justify-center  gap-8 ">
-                <div className="flex  w-full max-w-md  flex-col">
-                    <h2 className=' font-bold flex gap-2 items-center text-2xl font text-shadow-xl py-2 text-white' ><Info />Thông tin</h2>
+            <div className="flex flex-col md:flex-row justify-center gap-6 md:gap-8 overflow-y-auto">
+                <div className="flex w-full md:max-w-md flex-col">
+                    <h2 className='font-bold flex gap-2 items-center text-xl md:text-2xl text-shadow-xl py-2 text-white'><Info />Thông tin</h2>
 
-                    <div className=' h-full overflow-auto rounded-3xl text-white py-2 px-4 glass glass-light text-whiterounded-3xl'>
-                        <h2 >{currentAsset?.description}</h2>
+                    <div className='h-full overflow-auto rounded-3xl text-white py-3 px-5 glass glass-light'>
+                        <p className='text-base md:text-lg leading-relaxed'>{currentAsset?.description}</p>
                     </div>
                 </div>
                 {currentAsset?.image_url && (
-                    <div className="flex flex-col justify-center rounded-3xl overflow-hidden">
-                        <h2 className=' font-bold flex gap-2 items-center text-2xl font text-shadow-xl py-2 text-white' ><Info />Hình ảnh</h2>
+                    <div className="flex flex-col justify-center rounded-3xl overflow-hidden flex-shrink-0">
+                        <h2 className='font-bold flex gap-2 items-center text-xl md:text-2xl text-shadow-xl py-2 text-white'><Info />Hình ảnh</h2>
                         <img
                             src={currentAsset.image_url}
                             alt={currentAsset.title}
-                            className="w-auto h-[250px] object-cover rounded-3xl"
+                            className="w-auto max-w-full h-[300px] md:h-[400px] object-cover rounded-3xl"
                         />
                     </div>
                 )}

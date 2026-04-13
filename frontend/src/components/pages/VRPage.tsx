@@ -92,7 +92,7 @@ const VRPage = () => {
     };
   }, [registerMessageHandler]);
 
-  const assetSnapPoints = ["400px", 1];
+  const assetSnapPoints = ["500px", 1];
   const [assetSnap, setAssetSnap] = useState<number | string | null>(
     assetSnapPoints[0]
   );

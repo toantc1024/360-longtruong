@@ -9,7 +9,7 @@ import { RiDirectionFill } from 'react-icons/ri';
 import { Carousel, CarouselItem, CarouselContent, CarouselPrevious, CarouselNext } from '../ui/carousel';
 import type { Panorama } from '@/types/panoramas.service.type';
 import { getPanoramasByHotspotId } from '@/services/panoramas.service';
-const snapPoints = ['150px', '350px'];
+const snapPoints = ['200px', '450px'];
 export default function MapItemDrawerBlock({
     currentHotspot,
     setCurrentHotspot,
@@ -68,15 +68,15 @@ export default function MapItemDrawerBlock({
                                 'overflow-hidden': snap !== 1,
                             })}
                         >
-                            <Drawer.Title className="text-2xl text-white mt-2 font-medium ">{currentHotspot?.title}</Drawer.Title>
-                            <div className="flex items-center mt-2 text-xs text-gray-400">
+                            <Drawer.Title className="text-2xl md:text-3xl text-white mt-2 font-bold">{currentHotspot?.title}</Drawer.Title>
+                            <div className="mt-2 text-sm md:text-base text-white/80 leading-relaxed">
                                 {currentHotspot?.description}
                             </div>
 
                             {currentHotspot?.address && (
-                                <div className="flex items-center mt-2 text-xs text-gray-400">
-                                    <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
-                                    <span className="truncate text-white">{currentHotspot.address}</span>
+                                <div className="flex items-center mt-2 text-sm md:text-base text-white/70">
+                                    <MapPin className="w-4 h-4 mr-1.5 flex-shrink-0" />
+                                    <span className="truncate">{currentHotspot.address}</span>
                                 </div>
                             )}
                             < div
