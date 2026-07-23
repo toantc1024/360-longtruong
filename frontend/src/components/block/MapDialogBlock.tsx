@@ -76,17 +76,22 @@ export default function MapDialogBlock({
     useEffect(() => {
         if (!mapContainer.current || mapRef.current) return;
 
-        mapRef.current = new maplibregl.Map({
-            container: mapContainer.current,
-            style: {
-                version: 8,
+        const goongMapKey = import.meta.env.VITE_GOONG_MAP_KEY;
+        const styleUrl = goongMapKey
+            ? `https://tiles.goong.io/assets/goong_map_web.json?api_key=${goongMapKey}`
+            : {
+                version: 8 as const,
                 sources: {},
                 layers: [],
                 glyphs: "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf"
-            },
+            };
+
+        mapRef.current = new maplibregl.Map({
+            container: mapContainer.current,
+            style: styleUrl,
             center,
             zoom,
-            pitch: 65,
+            pitch: 45,
             attributionControl: false,
 
         });
@@ -120,12 +125,27 @@ export default function MapDialogBlock({
                         "case",
                         ["boolean", ["feature-state", "hover"], false],
                         "#2b7fff",
-                        "#000", // normal
+                        "#3b82f6", // normal
                     ],
-                    "fill-opacity": 0.65,
+                    "fill-opacity": [
+                        "case",
+                        ["boolean", ["feature-state", "hover"], false],
+                        0.35,
+                        0.08, // subtle highlight over Goong map
+                    ],
                 },
             });
 
+            mapRef.current!.addLayer({
+                id: "custom-geojson-line",
+                type: "line",
+                source: "custom-geojson",
+                paint: {
+                    "line-color": "#2563eb",
+                    "line-width": 1.5,
+                    "line-opacity": 0.6,
+                },
+            });
 
             mapRef.current?.addLayer({
                 id: 'custom-geojson-labels',
@@ -133,12 +153,14 @@ export default function MapDialogBlock({
                 source: 'custom-geojson',
                 layout: {
                     'text-field': ['get', 'ten_xa'],
-                    'text-size': 15,
+                    'text-size': 13,
                     'text-anchor': 'center',
                     'symbol-placement': 'point'
                 },
                 paint: {
-                    'text-color': '#fff'
+                    'text-color': '#1e293b',
+                    'text-halo-color': '#ffffff',
+                    'text-halo-width': 2
                 }
             });
             let hoveredId: string | number | null = null;
