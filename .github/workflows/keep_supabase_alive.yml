@@ -1,0 +1,30 @@
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    # Runs every 2 days at 00:00 UTC (7:00 AM ICT) to keep free Supabase DB active
+    - cron: '0 0 */2 * *'
+  workflow_dispatch: # Allows manual run anytime from GitHub Actions tab
+
+jobs:
+  ping-supabase:
+    name: Ping Supabase REST API
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send keep-alive query to Supabase
+        env:
+          SUPABASE_URL: "https://jmeiegtjrrdeubwzgder.supabase.co"
+          ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImptZWllZ3RqcnJkZXVid3pnZGVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYwNTM3OTgsImV4cCI6MjA3MTYyOTc5OH0.JCuKV4TWJlCs15WePRXhL42ZFZ1Miglb-HcdTt3C0BY' }}
+        run: |
+          echo "Sending keep-alive ping to Supabase database..."
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X GET "${SUPABASE_URL}/rest/v1/areas?select=area_id&limit=1" \
+            -H "apikey: ${ANON_KEY}" \
+            -H "Authorization: Bearer ${ANON_KEY}")
+
+          echo "Supabase HTTP Response Code: ${HTTP_STATUS}"
+          if [ "$HTTP_STATUS" -eq 200 ]; signal="SUCCESS"; then
+            echo "[SUCCESS] Supabase database is active and awake!"
+          else
+            echo "[WARN] Supabase ping returned HTTP status ${HTTP_STATUS}"
+          fi
