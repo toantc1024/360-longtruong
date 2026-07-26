@@ -5,8 +5,8 @@
 
 // Site Info
 export const SITE_INFO = {
-  name: "Long Trường VR",
-  shortName: "Long Trường VR",
+  name: "Long Trường",
+  shortName: "Long Trường",
   domain: "longtruong.yhcmute.com",
   technology: "VR",
 };
@@ -15,9 +15,9 @@ export const SITE_INFO = {
 export const HERO_CONTENT = {
   badge: "Công nghệ",
   badgeHighlight: "VR",
-  title: "Long Trường VR",
-  titleHighlight: "Khám phá Long Trường 360°",
-  subtitle: "Trải nghiệm thực tế ảo phường Long Trường - Khám phá lịch sử, văn hoá và di tích bằng Công nghệ Số.",
+  title: "Cổng thông tin số hóa địa chỉ đỏ và thông tin các gia đình có công với cách mạng",
+  titleHighlight: "trên địa bàn phường Long Trường",
+  subtitle: "",
   buttons: {
     start: "Bắt đầu",
     game: "Trò chơi Lịch sử",

@@ -26,7 +26,7 @@ const FooterSection = () => {
             <span className="pt-4 text-center text-muted-foreground">
               &copy; {new Date().getFullYear()}{" "}
               <a href="/" target="_blank">
-                bandoso.yhcmute.com
+                Phường Long Trường
               </a>
               <br />
             </span>

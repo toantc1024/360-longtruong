@@ -40,19 +40,22 @@ export default function HeroSection() {
           )}
         />
       </div>
-      <div className="relative z-[20] text-center max-w-2xl   ">
+      <div className="relative z-[20] text-center max-w-4xl">
         <Badge className="text-white rounded-full py-2 text-md bg-background glass glass-light">
           {HERO_CONTENT.badge}{" "}
           <Badge className="text-white py-1  rounded-full !bg-primary">
             {HERO_CONTENT.badgeHighlight}
           </Badge>
         </Badge>
-        <h1 className="mt-6 text-4xl sm:text-5xl md:text-6xl font-bold !leading-[1.2] tracking-tight">
-          {HERO_CONTENT.title}
-          <br />
-          <AuroraText>{HERO_CONTENT.titleHighlight}</AuroraText>
+        <h1 className="mt-6 text-2xl sm:text-3xl md:text-4xl font-bold !leading-[1.3] tracking-tight">
+          {HERO_CONTENT.title}{" "}
+          {HERO_CONTENT.titleHighlight && (
+            <AuroraText>{HERO_CONTENT.titleHighlight}</AuroraText>
+          )}
         </h1>
-        <p className="mt-6 text-[17px] md:text-lg">{HERO_CONTENT.subtitle}</p>
+        {HERO_CONTENT.subtitle ? (
+          <p className="mt-6 text-[17px] md:text-lg">{HERO_CONTENT.subtitle}</p>
+        ) : null}
         <div className="mt-6 flex flex-col sm:flex-row items-center z-[30] justify-center gap-3 sm:gap-4 w-full max-w-4xl">
           <Button
             size="lg"
