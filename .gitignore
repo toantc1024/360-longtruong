@@ -1,6 +1,8 @@
 # Dependencies & Build
 node_modules/
 .DS_Store
+.env*
+automation/.env*
 
 # Backend API (admin-only, managed separately)
 bandoso-api/
