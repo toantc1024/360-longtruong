@@ -15,8 +15,8 @@ export const SITE_INFO = {
 export const HERO_CONTENT = {
   badge: "Công nghệ",
   badgeHighlight: "VR",
-  title: "Cổng thông tin số hóa địa chỉ đỏ và thông tin các gia đình có công với cách mạng",
-  titleHighlight: "trên địa bàn phường Long Trường",
+  title: "Cổng thông tin số hóa địa chỉ đỏ và thông tin các gia đình có công với cách mạng trên địa bàn",
+  titleHighlight: "Phường Long Trường",
   subtitle: "",
   buttons: {
     start: "Bắt đầu",

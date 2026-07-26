@@ -1,2 +1,6 @@
+# Dependencies & Build
+node_modules/
+.DS_Store
+
 # Backend API (admin-only, managed separately)
 bandoso-api/
