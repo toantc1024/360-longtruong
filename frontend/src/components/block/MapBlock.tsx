@@ -193,7 +193,7 @@ export default function MapDialogBlock({
                 <div class="map-marker shadow-xl cursor-pointer ${isSelected ? 'ring-[3px] border-[0px] ring-blue-400 border-blue-400 border-none ring-opacity-60 selected' : ''}">
                     <div class="map-marker-circle ">
                         <div class="map-marker-image">
-                            <img src="${hotspot.preview_image}" alt="place" />
+                            <img src="/android-chrome-512x512.png" alt="logo" />
                         </div>
                     </div>
                 </div>
