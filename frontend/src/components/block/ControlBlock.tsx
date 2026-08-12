@@ -57,6 +57,7 @@ const ControlBlock = ({
     setCurrentPanoramaById,
     panoramas,
   } = useVRStore((state) => state);
+  const bumpNavigation = useAudioStore((s) => s.bumpNavigation);
   const actionPills = [
     {
       id: "introduction",
@@ -93,6 +94,7 @@ const ControlBlock = ({
               </>
             ),
             onClick: () => {
+              bumpNavigation();
               if (currentArea?.main_hotspot_id) {
                 const panoramaId = getHotspotById(
                   Number(currentArea.main_hotspot_id)
@@ -199,6 +201,7 @@ const ControlBlock = ({
                             }
                             value={panorama.title}
                             onSelect={(currentValue) => {
+                              bumpNavigation();
                               setValue(currentValue);
                               setOpen(false);
                               setCurrentPanoramaById(panorama.panorama_id);
