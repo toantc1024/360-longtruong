@@ -7,6 +7,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import useVRStore from "@/store/vr.store";
 import { Search } from "lucide-react";
 import MapItemDrawerBlock from "./MapItemDrawerBlock";
+import LeftNavDrawerBlock from "./LeftNavDrawerBlock";
 import { FiLogOut } from "react-icons/fi";
 import type { Hotspot } from "@/types/hotspots.service.type";
 
@@ -267,6 +268,11 @@ export default function MapDialogBlock({
                 showMedia={showMedia}
 
             />
+
+            {/* Left Nav Drawer — list of hotspots, routes, nhà có công */}
+            <div className="absolute top-12 md:top-4 left-4 z-[1005]">
+              <LeftNavDrawerBlock showMedia={showMedia} />
+            </div>
 
 
             <div className="h-screen w-full relative">
