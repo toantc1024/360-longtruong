@@ -34,6 +34,7 @@ import TutorialDialogBlock from "./TutorialDialogBlock";
 import MapDialogBlock from "./MapDialogBlock";
 import AssetActionPillBlock from "./AssetActionPillBlock";
 import LeftNavDrawerBlock from "./LeftNavDrawerBlock";
+import { AudioControlPill, AudioControlTopRightButton } from "./GlobalAudioManager";
 
 const ControlBlock = ({
   showMedia,
@@ -125,15 +126,6 @@ const ControlBlock = ({
           <Map className="!size-5 md:!size-7 lg:!size-9" />
         </Button>
 
-        {/* Audio Control Button */}
-        {/* {muteAllAudio && unmuteAllAudio && getAudioState && (
-          <AudioControlBlock
-            muteAllAudio={muteAllAudio}
-            unmuteAllAudio={unmuteAllAudio}
-            getAudioState={getAudioState}
-          />
-        )} */}
-
         <TutorialDialogBlock />
       </AbsoluteWrapper>
 
@@ -146,6 +138,7 @@ const ControlBlock = ({
         />
         <ChatbotDialogBlock />
         <SearchDialogBlock showMedia={showMedia} />
+        <AudioControlTopRightButton />
       </div>
 
       <div className="absolute w-full  top-0 flex flex-col items-center justify-center">
@@ -163,7 +156,7 @@ const ControlBlock = ({
       >
         <div className="w-full glass-light border-b border-white/10">
           <div className="relative">
-            <div className="z-[1] flex gap-2 py-2 px-2 overflow-x-auto scrollbar-hide justify-start lg:justify-center">
+            <div className="z-[1] flex gap-2 py-2 px-2 overflow-x-auto scrollbar-hide justify-start lg:justify-center items-center">
               <Popover open={open} onOpenChange={setOpen}>
                 <PopoverTrigger asChild>
                   <Button
@@ -235,6 +228,8 @@ const ControlBlock = ({
                 hotspot={currentHotspot}
                 showMedia={showMedia}
               />
+
+              <AudioControlPill />
 
               {actionPills.map((pill) => {
                 const IconComponent = pill.icon;

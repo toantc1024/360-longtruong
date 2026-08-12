@@ -5,6 +5,7 @@ export const DEFAULT_BG_MUSIC_URL =
   "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3";
 
 interface AudioSessionStoreState {
+  isPlaying: boolean;
   isMutedAll: boolean;
   bgMusicUrl: string | null;
   currentSpeechUrl: string | null;
@@ -13,6 +14,8 @@ interface AudioSessionStoreState {
 }
 
 interface AudioSessionStoreActions {
+  setIsPlaying: (playing: boolean) => void;
+  togglePlayPause: () => void;
   setBgMusicUrl: (url: string | null) => void;
   playSpeechForHotspot: (hotspotId: number, audioUrl: string) => void;
   pauseCurrentSpeech: () => void;
@@ -24,11 +27,15 @@ interface AudioSessionStoreActions {
 type AudioSessionStore = AudioSessionStoreState & AudioSessionStoreActions;
 
 export const useAudioStore = create<AudioSessionStore>((set) => ({
+  isPlaying: true,
   isMutedAll: false,
   bgMusicUrl: null,
   currentSpeechUrl: null,
   currentHotspotId: null,
   speechTimestamps: {},
+
+  setIsPlaying: (playing) => set({ isPlaying: playing }),
+  togglePlayPause: () => set((state) => ({ isPlaying: !state.isPlaying })),
 
   setBgMusicUrl: (url) => set({ bgMusicUrl: url }),
 

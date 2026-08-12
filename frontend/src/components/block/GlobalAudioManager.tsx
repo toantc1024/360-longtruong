@@ -1,18 +1,17 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import useVRStore from "@/store/vr.store";
 import { useAudioStore } from "@/store/audio.store";
 import { Volume2, VolumeX, Play, Pause, Music, Mic } from "lucide-react";
+import { Button } from "../ui/button";
 
 export const GlobalAudioManager: React.FC = () => {
   const { currentArea, currentHotspot } = useVRStore();
   const {
+    isPlaying,
     isMutedAll,
-    toggleMuteAll,
     speechTimestamps,
     updateSpeechTimestamp,
   } = useAudioStore();
-
-  const [isPlaying, setIsPlaying] = useState(true);
 
   const bgAudioRef = useRef<HTMLAudioElement | null>(null);
   const speechAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -155,62 +154,112 @@ export const GlobalAudioManager: React.FC = () => {
     }
   }, [isMutedAll, isPlaying]);
 
-  const togglePlayPause = () => {
-    setIsPlaying((prev) => !prev);
-  };
+  // Headless manager handles audio elements globally
+  return null;
+};
+
+// Bottom Bar Audio Control Pill matching exact glassmorphism design of toolbar buttons
+export const AudioControlPill: React.FC = () => {
+  const { currentArea, currentHotspot } = useVRStore();
+  const { isPlaying, togglePlayPause, isMutedAll, toggleMuteAll } = useAudioStore();
+
+  const bgMusicUrl = (currentArea as any)?.metadata?.bg_music_url;
+  const hotspotAudioUrl = (currentHotspot as any)?.metadata?.audio_url;
+
+  // Don't show pill if no audio is configured
+  if (!bgMusicUrl && !hotspotAudioUrl) return null;
 
   const isSpeechActive = Boolean(currentHotspot && hotspotAudioUrl);
 
-  // If no audio is currently configured or available, hide floating controller
-  if (!bgMusicUrl && !hotspotAudioUrl) return null;
-
   return (
-    <div className="fixed bottom-6 right-6 z-[9999] flex items-center gap-3 bg-slate-950/80 text-white backdrop-blur-2xl border border-slate-800/80 p-2.5 px-4 rounded-full shadow-2xl transition-all hover:border-blue-500/50 hover:shadow-blue-500/10 group">
-      {/* Speaker Mute / Unmute Button on Left */}
+    <div className="shadow-lg rounded-full glass glass-hover text-white flex items-center gap-2 px-3 py-1 cursor-pointer select-none text-xs sm:text-sm font-medium shrink-0">
+      {/* Mute/Unmute toggle */}
       <button
         type="button"
-        onClick={toggleMuteAll}
-        className="p-2 rounded-full bg-slate-900/90 hover:bg-slate-800 text-slate-200 hover:text-white transition-colors cursor-pointer shrink-0 border border-slate-800"
-        title={isMutedAll ? "Bật loa âm thanh" : "Tắt toàn bộ âm thanh (Mute)"}
+        onClick={(e) => {
+          e.stopPropagation();
+          toggleMuteAll();
+        }}
+        className="p-1 rounded-full hover:bg-white/20 text-white transition-colors cursor-pointer"
+        title={isMutedAll ? "Bật âm thanh" : "Tắt âm thanh (Mute)"}
       >
         {isMutedAll ? (
-          <VolumeX className="w-4 h-4 text-red-400" />
+          <VolumeX className="w-3.5 h-3.5 text-red-400" />
         ) : (
-          <Volume2 className="w-4 h-4 text-blue-400 animate-pulse" />
+          <Volume2 className="w-3.5 h-3.5 text-blue-300" />
         )}
       </button>
 
-      {/* Audio Status & Title */}
-      <div className="flex items-center gap-2 text-xs font-semibold">
+      {/* Label and status */}
+      <div
+        className="flex items-center gap-1.5 cursor-pointer max-w-[140px] sm:max-w-[180px] truncate"
+        onClick={togglePlayPause}
+      >
         {isSpeechActive ? (
-          <>
-            <Mic className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-            <span className="text-emerald-300 max-w-[130px] sm:max-w-[180px] truncate">
-              {currentHotspot?.title || "Thuyết minh"}
-            </span>
-          </>
+          <Mic className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
         ) : (
-          <>
-            <Music className="w-3.5 h-3.5 text-blue-400 shrink-0 animate-spin" style={{ animationDuration: "8s" }} />
-            <span className="text-blue-200">Nhạc nền khu vực</span>
-          </>
+          <Music className="w-3.5 h-3.5 text-blue-400 shrink-0" />
         )}
+        <span className="truncate">
+          {isSpeechActive ? (currentHotspot?.title || "Thuyết minh") : "Nhạc nền khu vực"}
+        </span>
       </div>
 
-      {/* Stop / Continue (Play/Pause) Button on Right */}
+      {/* Pause/Play toggle */}
       <button
         type="button"
-        onClick={togglePlayPause}
-        className="p-2 rounded-full bg-blue-600 hover:bg-blue-500 text-white transition-colors cursor-pointer shrink-0 font-bold shadow-md flex items-center justify-center ml-1"
-        title={isPlaying ? "Dừng âm thanh (Stop)" : "Tiếp tục phát (Continue)"}
+        onClick={(e) => {
+          e.stopPropagation();
+          togglePlayPause();
+        }}
+        className="p-1.5 rounded-full bg-blue-600/80 hover:bg-blue-500 text-white transition-colors cursor-pointer shrink-0 ml-0.5 flex items-center justify-center"
+        title={isPlaying ? "Tạm dừng (Pause)" : "Tiếp tục (Play)"}
       >
         {isPlaying ? (
-          <Pause className="w-4 h-4" />
+          <Pause className="w-3 h-3" />
         ) : (
-          <Play className="w-4 h-4 fill-white" />
+          <Play className="w-3 h-3 fill-white" />
         )}
       </button>
     </div>
+  );
+};
+
+// Top Right Audio Circle Button matching circular top-right toolbar buttons (Search, Map, Chatbot)
+export const AudioControlTopRightButton: React.FC = () => {
+  const { currentArea, currentHotspot } = useVRStore();
+  const { isPlaying, togglePlayPause, isMutedAll } = useAudioStore();
+
+  const bgMusicUrl = (currentArea as any)?.metadata?.bg_music_url;
+  const hotspotAudioUrl = (currentHotspot as any)?.metadata?.audio_url;
+
+  if (!bgMusicUrl && !hotspotAudioUrl) return null;
+
+  return (
+    <Button
+      type="button"
+      onClick={togglePlayPause}
+      className="w-12 h-12 xl:w-16 xl:h-16 shadow-lg rounded-full glass glass-hover ring-1 ring-black/10 flex items-center justify-center cursor-pointer text-white relative"
+      title={isPlaying ? "Tạm dừng Nhạc nền (Pause)" : "Phát Nhạc nền (Play)"}
+    >
+      {isMutedAll ? (
+        <VolumeX className="!size-5 sm:!size-6 xl:!size-8 text-red-400" />
+      ) : isPlaying ? (
+        <div className="relative flex items-center justify-center">
+          <Music className="!size-5 sm:!size-6 xl:!size-8 text-blue-300 animate-pulse" />
+          <span className="absolute -bottom-1 -right-1 bg-blue-600 rounded-full p-0.5">
+            <Pause className="w-2.5 h-2.5 fill-white text-white" />
+          </span>
+        </div>
+      ) : (
+        <div className="relative flex items-center justify-center">
+          <Music className="!size-5 sm:!size-6 xl:!size-8 text-white/50" />
+          <span className="absolute -bottom-1 -right-1 bg-emerald-600 rounded-full p-0.5">
+            <Play className="w-2.5 h-2.5 fill-white text-white" />
+          </span>
+        </div>
+      )}
+    </Button>
   );
 };
 
