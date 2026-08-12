@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import useVRStore from "@/store/vr.store";
 import { useAudioStore } from "@/store/audio.store";
-import { Volume2, VolumeX, Play, Pause, Music, Mic } from "lucide-react";
+import { Volume2, VolumeX, Play, Pause } from "lucide-react";
 import { Button } from "../ui/button";
 
 // ── Debug ──
@@ -14,7 +14,7 @@ let _speechAudio: HTMLAudioElement | null = null;
 let _activeSpeechHotspotId: number | null = null;
 
 const BG_VOLUME = 0.8;
-const BG_DUCKED = 0.12;
+const BG_DUCKED = 0.05;
 
 async function safePlay(label: string, audio: HTMLAudioElement): Promise<boolean> {
   if (audio.paused) {
@@ -256,8 +256,6 @@ export const AudioControlPill: React.FC = () => {
 
   if (!bgMusicUrl && !hotspotAudioUrl) return null;
 
-  const isSpeechActive = Boolean(currentHotspot && hotspotAudioUrl);
-
   return (
     <div className="shadow-lg rounded-full glass glass-hover text-white flex items-center gap-2 px-3 py-1 cursor-pointer select-none text-xs sm:text-sm font-medium shrink-0">
       {/* Mute/Unmute toggle */}
@@ -277,19 +275,12 @@ export const AudioControlPill: React.FC = () => {
         )}
       </button>
 
-      {/* Label and status */}
+      {/* Label */}
       <div
         className="flex items-center gap-1.5 cursor-pointer max-w-[140px] sm:max-w-[180px] truncate"
         onClick={togglePlayPause}
       >
-        {isSpeechActive ? (
-          <Mic className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-        ) : (
-          <Music className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-        )}
-        <span className="truncate">
-          {isSpeechActive ? (currentHotspot?.title || "Thuyết minh") : "Nhạc nền khu vực"}
-        </span>
+        <span className="truncate text-white">Âm thanh</span>
       </div>
 
       {/* Pause/Play toggle */}
