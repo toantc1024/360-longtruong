@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useCallback } from "react";
 import useVRStore from "@/store/vr.store";
 import { useAudioStore } from "@/store/audio.store";
 import { Volume2, VolumeX, Play, Pause, Music, Mic } from "lucide-react";
@@ -25,30 +25,42 @@ export const GlobalAudioManager: React.FC = () => {
     isMutedAllRef.current = isMutedAll;
   }, [isMutedAll]);
 
+  // Helper: try to play audio, returns true if success
+  const tryPlay = useCallback(async (audio: HTMLAudioElement) => {
+    try {
+      await audio.play();
+      return true;
+    } catch {
+      return false;
+    }
+  }, []);
+
   // Background Music URL (Custom background music uploaded for Area)
   const bgMusicUrl = (currentArea as any)?.metadata?.bg_music_url;
 
-  // Auto-unlock audio on user's first click anywhere on page
+  // Auto-unlock audio: keep listening for user interaction, play any paused audio
   useEffect(() => {
-    const handleFirstInteraction = () => {
-      if (bgAudioRef.current && !isMutedAll && isPlaying) {
+    const handleInteraction = () => {
+      const state = useAudioStore.getState();
+      if (state.isMutedAll || !state.isPlaying) return;
+      if (bgAudioRef.current && bgAudioRef.current.paused) {
         bgAudioRef.current.play().catch(console.warn);
       }
-      if (speechAudioRef.current && !isMutedAll && isPlaying) {
+      if (speechAudioRef.current && speechAudioRef.current.paused) {
         speechAudioRef.current.play().catch(console.warn);
       }
-      window.removeEventListener("click", handleFirstInteraction);
-      window.removeEventListener("touchstart", handleFirstInteraction);
     };
 
-    window.addEventListener("click", handleFirstInteraction);
-    window.addEventListener("touchstart", handleFirstInteraction);
+    window.addEventListener("click", handleInteraction);
+    window.addEventListener("touchstart", handleInteraction);
+    window.addEventListener("keydown", handleInteraction);
 
     return () => {
-      window.removeEventListener("click", handleFirstInteraction);
-      window.removeEventListener("touchstart", handleFirstInteraction);
+      window.removeEventListener("click", handleInteraction);
+      window.removeEventListener("touchstart", handleInteraction);
+      window.removeEventListener("keydown", handleInteraction);
     };
-  }, [isMutedAll, isPlaying]);
+  }, []); // No deps - always uses latest refs
 
   // Background Music loop setup & switching
   useEffect(() => {
@@ -69,10 +81,10 @@ export const GlobalAudioManager: React.FC = () => {
       bgAudioRef.current = audio;
 
       if (!isMutedAll && isPlaying) {
-        audio.play().catch(console.warn);
+        tryPlay(audio);
       }
     }
-  }, [bgMusicUrl, isMutedAll, isPlaying]);
+  }, [bgMusicUrl, isMutedAll, isPlaying, tryPlay]);
 
   // Hotspot Thuyết Minh speech setup & switching
   const hotspotAudioUrl = (currentHotspot as any)?.metadata?.audio_url;
@@ -94,7 +106,7 @@ export const GlobalAudioManager: React.FC = () => {
       // Restore background music volume to normal 0.8 when no speech is active
       if (bgAudioRef.current && !isMutedAllRef.current && isPlayingRef.current) {
         bgAudioRef.current.volume = 0.8;
-        bgAudioRef.current.play().catch(console.warn);
+        tryPlay(bgAudioRef.current);
       }
       activeHotspotIdRef.current = null;
       return;
@@ -135,7 +147,6 @@ export const GlobalAudioManager: React.FC = () => {
 
       // When speech finishes, restore background music volume to 0.8
       speech.onended = () => {
-        // Use refs to avoid stale closure
         if (bgAudioRef.current && !isMutedAllRef.current && isPlayingRef.current) {
           bgAudioRef.current.volume = 0.8;
         }
@@ -152,10 +163,10 @@ export const GlobalAudioManager: React.FC = () => {
       };
 
       if (!isMutedAll && isPlaying) {
-        speech.play().catch(console.warn);
+        tryPlay(speech);
       }
     }
-  }, [hotspotId, hotspotAudioUrl, isMutedAll, isPlaying]);
+  }, [hotspotId, hotspotAudioUrl, isMutedAll, isPlaying, tryPlay]);
 
   // Handle Mute All / Play Pause Toggle
   useEffect(() => {
@@ -164,14 +175,14 @@ export const GlobalAudioManager: React.FC = () => {
       if (speechAudioRef.current) speechAudioRef.current.pause();
     } else {
       if (speechAudioRef.current) {
-        speechAudioRef.current.play().catch(console.warn);
+        tryPlay(speechAudioRef.current);
         if (bgAudioRef.current) bgAudioRef.current.volume = 0.15;
       } else if (bgAudioRef.current) {
         bgAudioRef.current.volume = 0.8;
-        bgAudioRef.current.play().catch(console.warn);
+        tryPlay(bgAudioRef.current);
       }
     }
-  }, [isMutedAll, isPlaying]);
+  }, [isMutedAll, isPlaying, tryPlay]);
 
   // Headless manager handles audio elements globally
   return null;
@@ -231,11 +242,11 @@ export const AudioControlPill: React.FC = () => {
           e.stopPropagation();
           togglePlayPause();
         }}
-        className="p-1.5 rounded-full bg-blue-600/80 hover:bg-blue-500 text-white transition-colors cursor-pointer shrink-0 ml-0.5 flex items-center justify-center"
+        className="p-1.5 rounded-full glass text-white transition-colors cursor-pointer shrink-0 ml-0.5 flex items-center justify-center"
         title={isPlaying ? "Tạm dừng (Pause)" : "Tiếp tục (Play)"}
       >
         {isPlaying ? (
-          <Pause className="w-3 h-3" />
+          <Pause className="w-3 h-3 fill-white" />
         ) : (
           <Play className="w-3 h-3 fill-white" />
         )}
@@ -264,7 +275,7 @@ export const AudioControlTopRightButton: React.FC = () => {
       {isMutedAll ? (
         <VolumeX className="!size-5 sm:!size-6 xl:!size-8 text-red-400" />
       ) : isPlaying ? (
-        <Pause className="!size-5 sm:!size-6 xl:!size-8 text-emerald-400 fill-emerald-400 animate-pulse" />
+        <Pause className="!size-5 sm:!size-6 xl:!size-8 text-white fill-white" />
       ) : (
         <Play className="!size-5 sm:!size-6 xl:!size-8 text-white fill-white" />
       )}
