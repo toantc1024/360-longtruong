@@ -288,9 +288,11 @@ export default function MapDialogBlock({
         });
 
         // 3. Add Tuyến Đường markers & polylines with VR Long Trường logo
-        routes.forEach((route) => {
+        routes.forEach((route: any) => {
             if (route.points && route.points.length > 0) {
-                const coords: [number, number][] = route.points.map((p) => [p.lng ?? p.longitude ?? 0, p.lat ?? p.latitude ?? 0]);
+                const coords: [number, number][] = route.points.map((p: any) =>
+                    Array.isArray(p) ? [p[0], p[1]] : [p.lng ?? p.longitude ?? 0, p.lat ?? p.latitude ?? 0]
+                );
                 const sourceId = `route-src-${route.id}`;
                 const layerId = `route-lyr-${route.id}`;
 
@@ -326,9 +328,9 @@ export default function MapDialogBlock({
                     }
                 }
 
-                const firstPoint = route.points[0];
-                const firstLng = firstPoint.lng ?? firstPoint.longitude;
-                const firstLat = firstPoint.lat ?? firstPoint.latitude;
+                const firstPoint: any = route.points[0];
+                const firstLng = Array.isArray(firstPoint) ? firstPoint[0] : (firstPoint?.lng ?? firstPoint?.longitude);
+                const firstLat = Array.isArray(firstPoint) ? firstPoint[1] : (firstPoint?.lat ?? firstPoint?.latitude);
                 if (firstLng && firstLat) {
                     let element = document.createElement("div");
                     element.className = "marker-container";
