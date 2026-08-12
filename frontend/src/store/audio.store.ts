@@ -27,7 +27,7 @@ interface AudioSessionStoreActions {
 type AudioSessionStore = AudioSessionStoreState & AudioSessionStoreActions;
 
 export const useAudioStore = create<AudioSessionStore>((set) => ({
-  isPlaying: false,
+  isPlaying: true,
   isMutedAll: false,
   bgMusicUrl: null,
   currentSpeechUrl: null,
