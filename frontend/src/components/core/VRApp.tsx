@@ -18,10 +18,10 @@ const VRApp = () => {
 
   return (
     <>
-      <GlobalAudioManager />
       <TrackerBlock />
       <Toaster />
       <BrowserRouter>
+        <GlobalAudioManager />
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/app" element={<VRPage />} />

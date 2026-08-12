@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import useVRStore from "@/store/vr.store";
 import { useAudioStore } from "@/store/audio.store";
 import { Volume2, VolumeX, Play, Pause } from "lucide-react";
@@ -39,6 +40,7 @@ function destroySpeech() {
     _speechAudio.onended = null;
     _speechAudio.ontimeupdate = null;
     _speechAudio.removeAttribute("src");
+    _speechAudio.load(); // Force release
     _speechAudio = null;
     _activeSpeechHotspotId = null;
     log("Speech destroyed");
@@ -53,8 +55,17 @@ function saveSpeechTimestamp() {
   }
 }
 
+function stopAllSpeech() {
+  saveSpeechTimestamp();
+  destroySpeech();
+  if (_bgAudio) {
+    _bgAudio.volume = BG_VOLUME;
+  }
+}
+
 // ── Main Headless Manager ──
 export const GlobalAudioManager: React.FC = () => {
+  const location = useLocation();
   const { currentArea, currentHotspot } = useVRStore();
   const { isPlaying, isMutedAll } = useAudioStore();
 
@@ -67,17 +78,41 @@ export const GlobalAudioManager: React.FC = () => {
   const hotspotAudioUrl = (currentHotspot as any)?.metadata?.audio_url as string | undefined;
   const hotspotId = currentHotspot?.hotspot_id as number | undefined;
 
+  // ── 1d. In-app navigation: stop speech when user clicks Home or navigates ──
+  const navigationVersion = useAudioStore((s) => s.navigationVersion);
+  useEffect(() => {
+    if (navigationVersion === 0) return; // skip initial mount
+    log("Navigation detected (v" + navigationVersion + ") — stopping speech");
+    stopAllSpeech();
+  }, [navigationVersion]);
+
   // ── 1. Cleanup on unmount: stop everything ──
   useEffect(() => {
     return () => {
       log("Component unmounting — stopping all audio");
-      saveSpeechTimestamp();
-      destroySpeech();
+      stopAllSpeech();
       if (_bgAudio) {
         _bgAudio.pause();
-        // Don't null _bgAudio — it's a singleton, survives re-renders
       }
     };
+  }, []);
+
+  // ── 1b. Route change: stop speech when navigating away from /app ──
+  useEffect(() => {
+    if (location.pathname !== "/app") {
+      log("Navigated away from /app — stopping speech");
+      stopAllSpeech();
+    }
+  }, [location.pathname]);
+
+  // ── 1c. Page unload / tab close: stop speech ──
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      log("Page unloading — stopping speech");
+      stopAllSpeech();
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, []);
 
   // ── 2. Interaction listener: resume anything paused (browser autoplay unlock) ──
@@ -110,7 +145,6 @@ export const GlobalAudioManager: React.FC = () => {
       return;
     }
 
-    // Only recreate if src actually changed or first time
     if (!_bgAudio || _bgAudio.src !== bgMusicUrl) {
       if (_bgAudio) _bgAudio.pause();
       const a = new Audio(bgMusicUrl);
@@ -145,13 +179,8 @@ export const GlobalAudioManager: React.FC = () => {
 
     // ── No speech needed ──
     if (!hotspotId || !hotspotAudioUrl) {
-      saveSpeechTimestamp();
-      destroySpeech();
-      // Restore BG volume
-      if (_bgAudio) {
-        _bgAudio.volume = BG_VOLUME;
-        log("BG volume restored to", BG_VOLUME);
-      }
+      stopAllSpeech();
+      log("BG volume restored (no speech needed)");
       return;
     }
 
@@ -162,8 +191,7 @@ export const GlobalAudioManager: React.FC = () => {
     }
 
     // ── Switching: save old + destroy ──
-    saveSpeechTimestamp();
-    destroySpeech();
+    stopAllSpeech();
 
     // ── Create new ──
     _activeSpeechHotspotId = hotspotId;
@@ -184,15 +212,11 @@ export const GlobalAudioManager: React.FC = () => {
       log("BG ducked to", BG_DUCKED);
     }
 
-    // On speech ended → clear timestamp (next play starts from beginning), restore BG
+    // On speech ended → clear timestamp, restore BG
     speech.onended = () => {
-      if (myVersion !== _speechVersion) return; // stale
-      log("Speech ended — clearing timestamp for next play from start");
-      // Clear timestamp so re-entering plays from 0
-      const ts = useAudioStore.getState().speechTimestamps;
-      const next = { ...ts };
-      delete next[hotspotId];
-      useAudioStore.getState().updateSpeechTimestamp(next);
+      if (myVersion !== _speechVersion) return;
+      log("Speech ended — clearing timestamp, restoring BG");
+      useAudioStore.getState().clearSpeechTimestamp(hotspotId);
       if (_bgAudio) {
         _bgAudio.volume = BG_VOLUME;
         log("BG volume restored to", BG_VOLUME);
@@ -202,9 +226,20 @@ export const GlobalAudioManager: React.FC = () => {
       useAudioStore.getState().pauseCurrentSpeech();
     };
 
+    // On error → log and restore BG
+    speech.onerror = (e) => {
+      if (myVersion !== _speechVersion) return;
+      log("Speech error:", e);
+      if (_bgAudio) {
+        _bgAudio.volume = BG_VOLUME;
+      }
+      _speechAudio = null;
+      _activeSpeechHotspotId = null;
+    };
+
     // Track timestamp continuously
     speech.ontimeupdate = () => {
-      if (myVersion !== _speechVersion) return; // stale
+      if (myVersion !== _speechVersion) return;
       useAudioStore.getState().updateSpeechTimestamp(hotspotId, speech.currentTime);
     };
 
@@ -228,21 +263,6 @@ export const GlobalAudioManager: React.FC = () => {
       safePlay("Speech", _speechAudio);
     }
   }, [isPlaying, isMutedAll]);
-
-  // ── 7. Debug: log on every render ──
-  useEffect(() => {
-    log("State:", {
-      bgUrl: bgMusicUrl?.substring(0, 50),
-      speechUrl: hotspotAudioUrl?.substring(0, 50),
-      hotspotId,
-      isPlaying,
-      isMutedAll,
-      bgPaused: _bgAudio?.paused,
-      bgVol: _bgAudio?.volume?.toFixed(2),
-      spPaused: _speechAudio?.paused,
-      spSrc: _speechAudio?.src?.substring(0, 50),
-    });
-  });
 
   return null;
 };

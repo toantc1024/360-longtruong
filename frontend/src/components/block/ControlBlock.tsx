@@ -10,6 +10,7 @@ import {
 import { Map } from "lucide-react";
 import { PiInfoFill } from "react-icons/pi";
 import useVRStore from "@/store/vr.store";
+import { useAudioStore } from "@/store/audio.store";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {

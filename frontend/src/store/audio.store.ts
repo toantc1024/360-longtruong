@@ -22,6 +22,10 @@ interface AudioSessionStoreActions {
   setMuteAll: (muted: boolean) => void;
   toggleMuteAll: () => void;
   updateSpeechTimestamp: (hotspotId: number, time: number) => void;
+  clearSpeechTimestamp: (hotspotId: number) => void;
+  /** Signal that user is navigating — GlobalAudioManager watches this */
+  navigationVersion: number;
+  bumpNavigation: () => void;
 }
 
 type AudioSessionStore = AudioSessionStoreState & AudioSessionStoreActions;
@@ -62,4 +66,15 @@ export const useAudioStore = create<AudioSessionStore>((set) => ({
       },
     }));
   },
+
+  clearSpeechTimestamp: (hotspotId) => {
+    set((state) => {
+      const next = { ...state.speechTimestamps };
+      delete next[hotspotId];
+      return { speechTimestamps: next };
+    });
+  },
+
+  navigationVersion: 0,
+  bumpNavigation: () => set((state) => ({ navigationVersion: state.navigationVersion + 1 })),
 }));
