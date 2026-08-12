@@ -66,6 +66,8 @@ function stopAllSpeech() {
 // ── Main Headless Manager ──
 export const GlobalAudioManager: React.FC = () => {
   const location = useLocation();
+  const isOnApp = location.pathname === "/app";
+
   const { currentArea, currentHotspot } = useVRStore();
   const { isPlaying, isMutedAll } = useAudioStore();
 
@@ -97,13 +99,16 @@ export const GlobalAudioManager: React.FC = () => {
     };
   }, []);
 
-  // ── 1b. Route change: stop speech when navigating away from /app ──
+  // ── 1b. Route change: stop ALL audio when navigating away from /app ──
   useEffect(() => {
-    if (location.pathname !== "/app") {
-      log("Navigated away from /app — stopping speech");
+    if (!isOnApp) {
+      log("Not on /app — stopping all audio");
       stopAllSpeech();
+      if (_bgAudio) {
+        _bgAudio.pause();
+      }
     }
-  }, [location.pathname]);
+  }, [isOnApp]);
 
   // ── 1c. Page unload / tab close: stop speech ──
   useEffect(() => {
@@ -134,9 +139,9 @@ export const GlobalAudioManager: React.FC = () => {
     };
   }, []);
 
-  // ── 3. BG music: create when URL appears / changes ──
+  // ── 3. BG music: create when URL appears / changes (only on /app) ──
   useEffect(() => {
-    if (!bgMusicUrl) {
+    if (!isOnApp || !bgMusicUrl) {
       if (_bgAudio) {
         _bgAudio.pause();
         _bgAudio = null;
@@ -157,7 +162,7 @@ export const GlobalAudioManager: React.FC = () => {
         safePlay("BG (auto)", a);
       }
     }
-  }, [bgMusicUrl]);
+  }, [bgMusicUrl, isOnApp]);
 
   // ── 4. BG music: play / pause from user toggle ──
   useEffect(() => {
@@ -173,8 +178,9 @@ export const GlobalAudioManager: React.FC = () => {
     }
   }, [isPlaying, isMutedAll]);
 
-  // ── 5. Speech: manage lifecycle with version guard ──
+  // ── 5. Speech: manage lifecycle with version guard (only on /app) ──
   useEffect(() => {
+    if (!isOnApp) return;
     const myVersion = ++_speechVersion;
 
     // ── No speech needed ──
@@ -249,7 +255,7 @@ export const GlobalAudioManager: React.FC = () => {
     if (!isMutedAllRef.current && isPlayingRef.current) {
       safePlay("Speech", speech);
     }
-  }, [hotspotId, hotspotAudioUrl]);
+  }, [hotspotId, hotspotAudioUrl, isOnApp]);
 
   // ── 6. Speech: play / pause from user toggle ──
   useEffect(() => {
