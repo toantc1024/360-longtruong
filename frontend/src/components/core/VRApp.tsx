@@ -6,6 +6,7 @@ import { Toaster } from "../ui/sonner";
 import NotFoundPage from "../pages/NotFoundPage";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import useVRStore from "@/store/vr.store";
+import GlobalAudioManager from "../block/GlobalAudioManager";
 
 const VRApp = () => {
   const { loadData } = useVRStore(state => state)
@@ -17,6 +18,7 @@ const VRApp = () => {
 
   return (
     <>
+      <GlobalAudioManager />
       <TrackerBlock />
       <Toaster />
       <BrowserRouter>
@@ -31,3 +33,4 @@ const VRApp = () => {
 };
 
 export default VRApp;
+
