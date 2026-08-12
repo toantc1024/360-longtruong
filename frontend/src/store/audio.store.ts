@@ -1,7 +1,8 @@
 import { create } from "zustand";
 
+// Real instrumental ambient background music track
 export const DEFAULT_BG_MUSIC_URL =
-  "https://jmeiegtjrrdeubwzgder.supabase.co/storage/v1/object/public/APP_IMAGES/base/audio/c921b03879254c719617a0aecf004069.mp3";
+  "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3";
 
 interface AudioSessionStoreState {
   isMutedAll: boolean;
@@ -24,12 +25,12 @@ type AudioSessionStore = AudioSessionStoreState & AudioSessionStoreActions;
 
 export const useAudioStore = create<AudioSessionStore>((set) => ({
   isMutedAll: false,
-  bgMusicUrl: DEFAULT_BG_MUSIC_URL,
+  bgMusicUrl: null,
   currentSpeechUrl: null,
   currentHotspotId: null,
   speechTimestamps: {},
 
-  setBgMusicUrl: (url) => set({ bgMusicUrl: url || DEFAULT_BG_MUSIC_URL }),
+  setBgMusicUrl: (url) => set({ bgMusicUrl: url }),
 
   playSpeechForHotspot: (hotspotId, audioUrl) => {
     set({

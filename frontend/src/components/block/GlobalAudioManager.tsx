@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import useVRStore from "@/store/vr.store";
-import { useAudioStore, DEFAULT_BG_MUSIC_URL } from "@/store/audio.store";
+import { useAudioStore } from "@/store/audio.store";
 import { Volume2, VolumeX, Play, Pause, Music, Mic } from "lucide-react";
 
 export const GlobalAudioManager: React.FC = () => {
@@ -18,9 +18,8 @@ export const GlobalAudioManager: React.FC = () => {
   const speechAudioRef = useRef<HTMLAudioElement | null>(null);
   const activeHotspotIdRef = useRef<number | null>(null);
 
-  // Background Music URL (Area custom or default hardcoded music)
-  const bgMusicUrl =
-    (currentArea as any)?.metadata?.bg_music_url || DEFAULT_BG_MUSIC_URL;
+  // Background Music URL (Custom background music uploaded for Area)
+  const bgMusicUrl = (currentArea as any)?.metadata?.bg_music_url;
 
   // Auto-unlock audio on user's first click anywhere on page
   useEffect(() => {
@@ -162,46 +161,53 @@ export const GlobalAudioManager: React.FC = () => {
 
   const isSpeechActive = Boolean(currentHotspot && hotspotAudioUrl);
 
+  // If no audio is currently configured or available, hide floating controller
+  if (!bgMusicUrl && !hotspotAudioUrl) return null;
+
   return (
-    <div className="fixed bottom-4 left-4 z-[9999] flex items-center gap-2 bg-slate-950/90 text-white backdrop-blur-xl border border-slate-800 p-2 px-3 rounded-full shadow-2xl animate-in fade-in slide-in-from-bottom-4 transition-all">
-      {/* Dynamic Status Icon & Text */}
-      <div className="flex items-center gap-2 text-xs font-semibold pr-2 border-r border-slate-800">
+    <div className="fixed bottom-6 right-6 z-[9999] flex items-center gap-3 bg-slate-950/80 text-white backdrop-blur-2xl border border-slate-800/80 p-2.5 px-4 rounded-full shadow-2xl transition-all hover:border-blue-500/50 hover:shadow-blue-500/10 group">
+      {/* Speaker Mute / Unmute Button on Left */}
+      <button
+        type="button"
+        onClick={toggleMuteAll}
+        className="p-2 rounded-full bg-slate-900/90 hover:bg-slate-800 text-slate-200 hover:text-white transition-colors cursor-pointer shrink-0 border border-slate-800"
+        title={isMutedAll ? "Bật loa âm thanh" : "Tắt toàn bộ âm thanh (Mute)"}
+      >
+        {isMutedAll ? (
+          <VolumeX className="w-4 h-4 text-red-400" />
+        ) : (
+          <Volume2 className="w-4 h-4 text-blue-400 animate-pulse" />
+        )}
+      </button>
+
+      {/* Audio Status & Title */}
+      <div className="flex items-center gap-2 text-xs font-semibold">
         {isSpeechActive ? (
           <>
-            <Mic className="w-4 h-4 text-emerald-400 animate-pulse" />
-            <span className="hidden sm:inline text-emerald-300 max-w-[150px] truncate">
+            <Mic className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+            <span className="text-emerald-300 max-w-[130px] sm:max-w-[180px] truncate">
               {currentHotspot?.title || "Thuyết minh"}
             </span>
           </>
         ) : (
           <>
-            <Music className="w-4 h-4 text-blue-400 animate-spin" style={{ animationDuration: "6s" }} />
-            <span className="hidden sm:inline text-blue-300">Nhạc nền khu vực</span>
+            <Music className="w-3.5 h-3.5 text-blue-400 shrink-0 animate-spin" style={{ animationDuration: "8s" }} />
+            <span className="text-blue-200">Nhạc nền khu vực</span>
           </>
         )}
       </div>
 
-      {/* Play / Pause Toggle Button */}
+      {/* Stop / Continue (Play/Pause) Button on Right */}
       <button
         type="button"
         onClick={togglePlayPause}
-        className="p-1.5 rounded-full hover:bg-slate-800 text-slate-200 hover:text-white transition-colors cursor-pointer"
-        title={isPlaying ? "Tạm dừng âm thanh" : "Tiếp tục phát âm thanh"}
+        className="p-2 rounded-full bg-blue-600 hover:bg-blue-500 text-white transition-colors cursor-pointer shrink-0 font-bold shadow-md flex items-center justify-center ml-1"
+        title={isPlaying ? "Dừng âm thanh (Stop)" : "Tiếp tục phát (Continue)"}
       >
-        {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 text-emerald-400" />}
-      </button>
-
-      {/* Mute / Unmute Toggle Button */}
-      <button
-        type="button"
-        onClick={toggleMuteAll}
-        className="p-1.5 rounded-full hover:bg-slate-800 text-slate-200 hover:text-white transition-colors cursor-pointer"
-        title={isMutedAll ? "Bật âm thanh" : "Tắt toàn bộ âm thanh (Mute)"}
-      >
-        {isMutedAll ? (
-          <VolumeX className="w-4 h-4 text-red-400" />
+        {isPlaying ? (
+          <Pause className="w-4 h-4" />
         ) : (
-          <Volume2 className="w-4 h-4 text-blue-400" />
+          <Play className="w-4 h-4 fill-white" />
         )}
       </button>
     </div>
