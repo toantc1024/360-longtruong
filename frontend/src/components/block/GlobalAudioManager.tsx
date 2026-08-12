@@ -13,6 +13,9 @@ let _bgAudio: HTMLAudioElement | null = null;
 let _speechAudio: HTMLAudioElement | null = null;
 let _activeSpeechHotspotId: number | null = null;
 
+// Monotonically increasing ID to prevent stale effects from acting
+let _speechVersion = 0;
+
 const BG_VOLUME = 0.8;
 const BG_DUCKED = 0.05;
 
@@ -30,6 +33,26 @@ async function safePlay(label: string, audio: HTMLAudioElement): Promise<boolean
   return true;
 }
 
+function destroySpeech() {
+  if (_speechAudio) {
+    _speechAudio.pause();
+    _speechAudio.onended = null;
+    _speechAudio.ontimeupdate = null;
+    _speechAudio.removeAttribute("src");
+    _speechAudio = null;
+    _activeSpeechHotspotId = null;
+    log("Speech destroyed");
+  }
+}
+
+function saveSpeechTimestamp() {
+  if (_speechAudio && _activeSpeechHotspotId !== null) {
+    const time = _speechAudio.currentTime || 0;
+    useAudioStore.getState().updateSpeechTimestamp(_activeSpeechHotspotId, time);
+    log(`Timestamp saved: hotspot ${_activeSpeechHotspotId} @ ${time.toFixed(1)}s`);
+  }
+}
+
 // ── Main Headless Manager ──
 export const GlobalAudioManager: React.FC = () => {
   const { currentArea, currentHotspot } = useVRStore();
@@ -44,15 +67,26 @@ export const GlobalAudioManager: React.FC = () => {
   const hotspotAudioUrl = (currentHotspot as any)?.metadata?.audio_url as string | undefined;
   const hotspotId = currentHotspot?.hotspot_id as number | undefined;
 
-  // ── 1. Interaction listener: resume anything paused (browser autoplay unlock) ──
+  // ── 1. Cleanup on unmount: stop everything ──
+  useEffect(() => {
+    return () => {
+      log("Component unmounting — stopping all audio");
+      saveSpeechTimestamp();
+      destroySpeech();
+      if (_bgAudio) {
+        _bgAudio.pause();
+        // Don't null _bgAudio — it's a singleton, survives re-renders
+      }
+    };
+  }, []);
+
+  // ── 2. Interaction listener: resume anything paused (browser autoplay unlock) ──
   useEffect(() => {
     const tryResumeAll = () => {
       const s = useAudioStore.getState();
       if (s.isMutedAll || !s.isPlaying) return;
-      const bg = _bgAudio;
-      const sp = _speechAudio;
-      if (bg && bg.paused) safePlay("BG (tap)", bg);
-      if (sp && sp.paused) safePlay("Speech (tap)", sp);
+      if (_bgAudio && _bgAudio.paused) safePlay("BG (tap)", _bgAudio);
+      if (_speechAudio && _speechAudio.paused) safePlay("Speech (tap)", _speechAudio);
     };
 
     window.addEventListener("click", tryResumeAll);
@@ -65,7 +99,7 @@ export const GlobalAudioManager: React.FC = () => {
     };
   }, []);
 
-  // ── 2. BG music: create when URL appears / changes, NEVER destroy on hotspot switch ──
+  // ── 3. BG music: create when URL appears / changes ──
   useEffect(() => {
     if (!bgMusicUrl) {
       if (_bgAudio) {
@@ -76,98 +110,66 @@ export const GlobalAudioManager: React.FC = () => {
       return;
     }
 
-    // Only recreate if src actually changed (new area) or first time
+    // Only recreate if src actually changed or first time
     if (!_bgAudio || _bgAudio.src !== bgMusicUrl) {
-      if (_bgAudio) {
-        _bgAudio.pause();
-        _bgAudio.removeAttribute("src");
-      }
+      if (_bgAudio) _bgAudio.pause();
       const a = new Audio(bgMusicUrl);
       a.loop = true;
       a.volume = _speechAudio && !_speechAudio.paused ? BG_DUCKED : BG_VOLUME;
       _bgAudio = a;
       log("BG created:", bgMusicUrl);
 
-      // Try auto-play (browser may block until interaction)
       if (!isMutedAllRef.current && isPlayingRef.current) {
         safePlay("BG (auto)", a);
       }
     }
-  }, [bgMusicUrl]); // Only depends on URL change
+  }, [bgMusicUrl]);
 
-  // ── 3. BG music: play / pause from user toggle ──
+  // ── 4. BG music: play / pause from user toggle ──
   useEffect(() => {
-    const bg = _bgAudio;
-    if (!bg) return;
+    if (!_bgAudio) return;
 
     if (isMutedAll || !isPlaying) {
       log("BG ⏸ user pause/mute");
-      bg.pause();
+      _bgAudio.pause();
     } else {
       const sp = _speechAudio;
-      bg.volume = sp && !sp.paused ? BG_DUCKED : BG_VOLUME;
-      safePlay("BG", bg);
+      _bgAudio.volume = sp && !sp.paused ? BG_DUCKED : BG_VOLUME;
+      safePlay("BG", _bgAudio);
     }
   }, [isPlaying, isMutedAll]);
 
-  // ── 4. Speech: create / switch / auto-play ──
+  // ── 5. Speech: manage lifecycle with version guard ──
   useEffect(() => {
+    const myVersion = ++_speechVersion;
+
     // ── No speech needed ──
     if (!hotspotId || !hotspotAudioUrl) {
-      if (_activeSpeechHotspotId !== null) {
-        // Save timestamp of old speech
-        const sp = _speechAudio;
-        if (sp) {
-          useAudioStore.getState().updateSpeechTimestamp(
-            _activeSpeechHotspotId,
-            sp.currentTime || 0
-          );
-          log(`Speech timestamp saved: hotspot ${_activeSpeechHotspotId} @ ${sp.currentTime.toFixed(1)}s`);
-        }
-      }
-      // Destroy speech
-      if (_speechAudio) {
-        _speechAudio.pause();
-        _speechAudio.onended = null;
-        _speechAudio.ontimeupdate = null;
-        _speechAudio = null;
-        _activeSpeechHotspotId = null;
-        log("Speech destroyed");
-      }
-      // Restore BG volume (BG was ducked)
-      const bg = _bgAudio;
-      if (bg) {
-        bg.volume = BG_VOLUME;
+      saveSpeechTimestamp();
+      destroySpeech();
+      // Restore BG volume
+      if (_bgAudio) {
+        _bgAudio.volume = BG_VOLUME;
         log("BG volume restored to", BG_VOLUME);
       }
       return;
     }
 
-    // ── Switching hotspot: save old speech timestamp ──
-    if (_activeSpeechHotspotId !== null && _activeSpeechHotspotId !== hotspotId) {
-      const sp = _speechAudio;
-      if (sp) {
-        useAudioStore.getState().updateSpeechTimestamp(
-          _activeSpeechHotspotId,
-          sp.currentTime || 0
-        );
-        log(`Speech timestamp saved: hotspot ${_activeSpeechHotspotId} @ ${sp.currentTime.toFixed(1)}s`);
-      }
-      // Destroy old speech
-      if (_speechAudio) {
-        _speechAudio.pause();
-        _speechAudio.onended = null;
-        _speechAudio.ontimeupdate = null;
-        _speechAudio = null;
-      }
-      _activeSpeechHotspotId = null;
+    // ── Same hotspot + same URL → no-op (don't recreate) ──
+    if (_activeSpeechHotspotId === hotspotId && _speechAudio && _speechAudio.src === hotspotAudioUrl) {
+      log("Speech already active for this hotspot, skipping");
+      return;
     }
 
-    // ── Create new speech audio ──
+    // ── Switching: save old + destroy ──
+    saveSpeechTimestamp();
+    destroySpeech();
+
+    // ── Create new ──
     _activeSpeechHotspotId = hotspotId;
     const speech = new Audio(hotspotAudioUrl);
     _speechAudio = speech;
-    log("Speech created:", hotspotAudioUrl, "for hotspot:", hotspotId);
+    log("Speech created:", hotspotAudioUrl, "hotspot:", hotspotId);
 
     // Resume from saved timestamp
     const savedTime = useAudioStore.getState().speechTimestamps[hotspotId] || 0;
@@ -176,35 +178,29 @@ export const GlobalAudioManager: React.FC = () => {
       log(`Speech resuming from ${savedTime.toFixed(1)}s`);
     }
 
-    // Duck BG volume while speech plays
-    const bg = _bgAudio;
-    if (bg) {
-      bg.volume = BG_DUCKED;
+    // Duck BG
+    if (_bgAudio) {
+      _bgAudio.volume = BG_DUCKED;
       log("BG ducked to", BG_DUCKED);
     }
 
-    // On speech ended → restore BG volume (BG continues playing)
+    // On speech ended → restore BG
     speech.onended = () => {
+      if (myVersion !== _speechVersion) return; // stale
       log("Speech ended");
-      const b = _bgAudio;
-      if (b) {
-        b.volume = BG_VOLUME;
+      if (_bgAudio) {
+        _bgAudio.volume = BG_VOLUME;
         log("BG volume restored to", BG_VOLUME);
       }
-      // Clean up speech ref
       _speechAudio = null;
       _activeSpeechHotspotId = null;
       useAudioStore.getState().pauseCurrentSpeech();
     };
 
-    // Track timestamp
+    // Track timestamp continuously
     speech.ontimeupdate = () => {
-      if (_speechAudio) {
-        useAudioStore.getState().updateSpeechTimestamp(
-          hotspotId,
-          speech.currentTime
-        );
-      }
+      if (myVersion !== _speechVersion) return; // stale
+      useAudioStore.getState().updateSpeechTimestamp(hotspotId, speech.currentTime);
     };
 
     log(`Speech ready hotspot=${hotspotId}, isPlaying=${isPlayingRef.current}, isMuted=${isMutedAllRef.current}`);
@@ -215,21 +211,20 @@ export const GlobalAudioManager: React.FC = () => {
     }
   }, [hotspotId, hotspotAudioUrl]);
 
-  // ── 5. Speech: play / pause from user toggle ──
+  // ── 6. Speech: play / pause from user toggle ──
   useEffect(() => {
-    const sp = _speechAudio;
-    if (!sp) return;
+    if (!_speechAudio) return;
 
     if (isMutedAll || !isPlaying) {
       log("Speech ⏸ user pause/mute");
-      sp.pause();
+      _speechAudio.pause();
     } else {
       if (_bgAudio) _bgAudio.volume = BG_DUCKED;
-      safePlay("Speech", sp);
+      safePlay("Speech", _speechAudio);
     }
   }, [isPlaying, isMutedAll]);
 
-  // ── 6. Debug: log on every state change ──
+  // ── 7. Debug: log on every render ──
   useEffect(() => {
     log("State:", {
       bgUrl: bgMusicUrl?.substring(0, 50),
@@ -238,8 +233,9 @@ export const GlobalAudioManager: React.FC = () => {
       isPlaying,
       isMutedAll,
       bgPaused: _bgAudio?.paused,
-      bgVolume: _bgAudio?.volume,
-      speechPaused: _speechAudio?.paused,
+      bgVol: _bgAudio?.volume?.toFixed(2),
+      spPaused: _speechAudio?.paused,
+      spSrc: _speechAudio?.src?.substring(0, 50),
     });
   });
 
@@ -258,15 +254,11 @@ export const AudioControlPill: React.FC = () => {
 
   return (
     <div className="shadow-lg rounded-full glass glass-hover text-white flex items-center gap-2 px-3 py-1 cursor-pointer select-none text-xs sm:text-sm font-medium shrink-0">
-      {/* Mute/Unmute toggle */}
       <button
         type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          toggleMuteAll();
-        }}
+        onClick={(e) => { e.stopPropagation(); toggleMuteAll(); }}
         className="p-1 rounded-full hover:bg-white/20 text-white transition-colors cursor-pointer"
-        title={isMutedAll ? "Bật âm thanh" : "Tắt âm thanh (Mute)"}
+        title={isMutedAll ? "Bật âm thanh" : "Tắt âm thanh"}
       >
         {isMutedAll ? (
           <VolumeX className="w-3.5 h-3.5 text-red-400" />
@@ -275,23 +267,18 @@ export const AudioControlPill: React.FC = () => {
         )}
       </button>
 
-      {/* Label */}
       <div
-        className="flex items-center gap-1.5 cursor-pointer max-w-[140px] sm:max-w-[180px] truncate"
+        className="flex items-center cursor-pointer max-w-[140px] sm:max-w-[180px] truncate"
         onClick={togglePlayPause}
       >
         <span className="truncate text-white">Âm thanh</span>
       </div>
 
-      {/* Pause/Play toggle */}
       <button
         type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          togglePlayPause();
-        }}
+        onClick={(e) => { e.stopPropagation(); togglePlayPause(); }}
         className="p-1.5 rounded-full glass text-white transition-colors cursor-pointer shrink-0 ml-0.5 flex items-center justify-center"
-        title={isPlaying ? "Tạm dừng (Pause)" : "Tiếp tục (Play)"}
+        title={isPlaying ? "Tạm dừng" : "Tiếp tục"}
       >
         {isPlaying ? (
           <Pause className="w-3 h-3 fill-white" />
@@ -318,7 +305,7 @@ export const AudioControlTopRightButton: React.FC = () => {
       type="button"
       onClick={togglePlayPause}
       className="w-12 h-12 xl:w-16 xl:h-16 shadow-lg rounded-full glass glass-hover ring-1 ring-black/10 flex items-center justify-center cursor-pointer text-white relative"
-      title={isPlaying ? "Tạm dừng âm thanh (Pause)" : "Phát âm thanh (Play)"}
+      title={isPlaying ? "Tạm dừng âm thanh" : "Phát âm thanh"}
     >
       {isMutedAll ? (
         <VolumeX className="!size-5 sm:!size-6 xl:!size-8 text-red-400" />

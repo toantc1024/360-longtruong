@@ -33,7 +33,6 @@ import ChatbotDialogBlock from "./ChatbotDialogBlock";
 import TutorialDialogBlock from "./TutorialDialogBlock";
 import MapDialogBlock from "./MapDialogBlock";
 import AssetActionPillBlock from "./AssetActionPillBlock";
-import LeftNavDrawerBlock from "./LeftNavDrawerBlock";
 import { AudioControlPill, AudioControlTopRightButton } from "./GlobalAudioManager";
 
 const ControlBlock = ({
@@ -84,8 +83,6 @@ const ControlBlock = ({
         left="0"
         customClassName="glass flex m-1 md:m-2 items-center px-1 md:px-2 h-auto rounded-4xl py-1 md:py-2 flex gap-1 md:gap-2 flex-col shadow-sm"
       >
-        <LeftNavDrawerBlock showMedia={showMedia} />
-
         {/* Top left nav */}
         {[
           {

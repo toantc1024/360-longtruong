@@ -10,6 +10,7 @@ import "./VRPage.module.css";
 import { useSearchParams } from "react-router-dom";
 import { Drawer } from "vaul";
 import AssetDrawerBlock from "../block/AssetDrawerBlock";
+import LeftNavDrawerBlock from "../block/LeftNavDrawerBlock";
 
 const TAG = "[VRPage]";
 const log = (...args: any[]) => console.log(TAG, ...args);
@@ -202,6 +203,11 @@ const VRPage = () => {
         style={{ height: cssHeight }}
       >
         <div className="w-full h-full relative">
+          {/* Left Drawer — rendered outside z-10 so it layers above MapDialogBlock */}
+          <div className="absolute top-2 left-2 z-[10010] pointer-events-auto">
+            <LeftNavDrawerBlock showMedia={showMedia} />
+          </div>
+
           <div className="absolute inset-0 z-10 pointer-events-none">
             <div className="pointer-events-auto">
               <ControlBlock
