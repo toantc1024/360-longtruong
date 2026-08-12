@@ -182,7 +182,7 @@ export default function MapDialogBlock({
         hotspotMarkersRef.current.forEach((marker) => marker.remove());
         hotspotMarkersRef.current = [];
 
-        // Add new hotspot markers
+        // 1. Add hotspot markers
         areaHotspots.forEach((hotspot) => {
             if (hotspot.geolocation?.lon && hotspot.geolocation?.lat) {
                 const isSelected = selectedHotspotId === hotspot.hotspot_id;
@@ -217,11 +217,126 @@ export default function MapDialogBlock({
                 hotspotMarkersRef.current.push(marker);
             }
         });
-    }, [areaHotspots, selectedHotspotId]);
 
+        // 2. Add Nhà Có Công markers with VR Long Trường logo
+        nhaCoCongList.forEach((item) => {
+            if (item.latitude && item.longitude) {
+                let element = document.createElement("div");
+                element.className = "marker-container";
+                element.innerHTML = `
+                <div class="map-marker shadow-xl cursor-pointer border-amber-500 ring-2 ring-amber-400">
+                    <div class="map-marker-circle">
+                        <div class="map-marker-image">
+                            <img src="/android-chrome-512x512.png" alt="logo" />
+                        </div>
+                    </div>
+                </div>
+                <div class="marker-label">
+                    <span class="marker-title font-bold text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded shadow-xs border border-amber-200">
+                        🎖️ ${item.ten_liet_si || item.nha_cua_ai}
+                    </span>
+                </div>
+            `;
 
+                element.addEventListener('click', () => {
+                    mapRef.current?.flyTo({
+                        center: [item.longitude!, item.latitude!],
+                        zoom: 15,
+                        duration: 1000
+                    });
+                });
 
+                let marker = new maplibregl.Marker({
+                    element: element,
+                    anchor: "bottom",
+                });
 
+                marker.setLngLat([item.longitude, item.latitude])
+                    .addTo(mapRef.current!);
+                hotspotMarkersRef.current.push(marker);
+            }
+        });
+
+        // 3. Add Tuyến Đường markers & polylines with VR Long Trường logo
+        routes.forEach((route) => {
+            if (route.points && route.points.length > 0) {
+                const coords: [number, number][] = route.points.map((p) => [p.lng ?? p.longitude ?? 0, p.lat ?? p.latitude ?? 0]);
+                const sourceId = `route-src-${route.id}`;
+                const layerId = `route-lyr-${route.id}`;
+
+                if (mapRef.current?.getSource(sourceId)) {
+                    (mapRef.current.getSource(sourceId) as maplibregl.GeoJSONSource).setData({
+                        type: 'Feature',
+                        properties: {},
+                        geometry: { type: 'LineString', coordinates: coords }
+                    });
+                } else if (mapRef.current) {
+                    try {
+                        mapRef.current.addSource(sourceId, {
+                            type: 'geojson',
+                            data: {
+                                type: 'Feature',
+                                properties: {},
+                                geometry: { type: 'LineString', coordinates: coords }
+                            }
+                        });
+                        mapRef.current.addLayer({
+                            id: layerId,
+                            type: 'line',
+                            source: sourceId,
+                            layout: { 'line-join': 'round', 'line-cap': 'round' },
+                            paint: {
+                                'line-color': route.color || '#8b5cf6',
+                                'line-width': 4,
+                                'line-opacity': 0.8
+                            }
+                        });
+                    } catch (e) {
+                        console.error("Error adding route layer:", e);
+                    }
+                }
+
+                const firstPoint = route.points[0];
+                const firstLng = firstPoint.lng ?? firstPoint.longitude;
+                const firstLat = firstPoint.lat ?? firstPoint.latitude;
+                if (firstLng && firstLat) {
+                    let element = document.createElement("div");
+                    element.className = "marker-container";
+                    element.innerHTML = `
+                    <div class="map-marker shadow-xl cursor-pointer border-purple-500 ring-2 ring-purple-400">
+                        <div class="map-marker-circle">
+                            <div class="map-marker-image">
+                                <img src="/android-chrome-512x512.png" alt="logo" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="marker-label">
+                        <span class="marker-title font-bold text-purple-800 bg-purple-50 px-1.5 py-0.5 rounded shadow-xs border border-purple-200">
+                            🚩 Tuyến: ${route.name}
+                        </span>
+                    </div>
+                `;
+
+                    element.addEventListener('click', () => {
+                        mapRef.current?.flyTo({
+                            center: [firstLng, firstLat],
+                            zoom: 15,
+                            duration: 1000
+                        });
+                    });
+
+                    let marker = new maplibregl.Marker({
+                        element: element,
+                        anchor: "bottom",
+                    });
+
+                    marker.setLngLat([firstLng, firstLat])
+                        .addTo(mapRef.current!);
+                    hotspotMarkersRef.current.push(marker);
+                }
+            }
+        });
+    }, [areaHotspots, currentArea, selectedHotspotId]);
 
     return (
 
