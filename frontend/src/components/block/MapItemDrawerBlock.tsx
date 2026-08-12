@@ -42,9 +42,9 @@ export default function MapItemDrawerBlock({
   const audioUrl = (currentHotspot as any)?.metadata?.audio_url;
 
   return (
-    <div className="fixed top-16 right-4 sm:right-6 z-[9999] w-[92vw] sm:w-[420px] max-h-[calc(100vh-6rem)] flex flex-col bg-slate-950/95 backdrop-blur-2xl border border-slate-800 rounded-3xl shadow-2xl text-slate-100 overflow-hidden animate-in fade-in slide-in-from-right-4 transition-all">
+    <div className="fixed top-16 right-4 sm:right-6 z-[9999] w-[92vw] sm:w-[420px] max-h-[calc(100vh-6rem)] flex flex-col bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl text-slate-100 overflow-hidden animate-in fade-in slide-in-from-right-4 transition-all">
       {/* Header Bar */}
-      <div className="p-4 sm:p-5 border-b border-slate-800/80 flex items-start justify-between gap-3 bg-slate-900/60">
+      <div className="p-4 sm:p-5 border-b border-slate-700 flex items-start justify-between gap-3 bg-slate-800">
         <div className="flex-1 min-w-0">
           <span className="text-[11px] font-bold text-blue-400 uppercase tracking-wider block mb-1">
             Chi Tiết Địa Điểm
@@ -62,7 +62,7 @@ export default function MapItemDrawerBlock({
 
         <button
           onClick={() => setCurrentHotspot(null)}
-          className="p-2 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors shrink-0"
+          className="p-2 rounded-full bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-colors shrink-0"
           title="Đóng"
         >
           <X className="w-5 h-5" />
@@ -73,7 +73,7 @@ export default function MapItemDrawerBlock({
       <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 text-sm leading-relaxed text-slate-200">
         {/* Preview Image if available */}
         {currentHotspot.preview_image && (
-          <div className="rounded-2xl overflow-hidden border border-slate-800 aspect-video shadow-md">
+          <div className="rounded-xl overflow-hidden border border-slate-700 aspect-video">
             <img
               src={currentHotspot.preview_image}
               alt={currentHotspot.title || ""}
@@ -82,9 +82,9 @@ export default function MapItemDrawerBlock({
           </div>
         )}
 
-        {/* Audio Thuyết Minh indicator — playback handled by GlobalAudioManager */}
+        {/* Audio indicator */}
         {audioUrl && (
-          <div className="flex items-center gap-2 p-3 bg-emerald-950/40 border border-emerald-800/50 rounded-2xl text-emerald-300 text-xs font-semibold">
+          <div className="flex items-center gap-2 p-3 bg-blue-900/30 border border-blue-800/40 rounded-xl text-blue-300 text-xs font-semibold">
             <Music className="w-4 h-4 shrink-0" />
             <span>Đang phát thuyết minh: {currentHotspot.title || "Địa điểm"}</span>
           </div>
@@ -96,7 +96,7 @@ export default function MapItemDrawerBlock({
             Mô tả chi tiết
           </h3>
           <div
-            className="text-slate-200 text-xs sm:text-sm leading-relaxed bg-slate-900/50 p-3.5 rounded-2xl border border-slate-800/60 overflow-hidden"
+            className="text-slate-200 text-xs sm:text-sm leading-relaxed bg-slate-800 p-3.5 rounded-xl border border-slate-700 overflow-hidden"
             dangerouslySetInnerHTML={{ __html: currentHotspot.description || "Chưa có mô tả cho địa điểm này." }}
           />
         </div>
@@ -107,7 +107,7 @@ export default function MapItemDrawerBlock({
             href={currentHotspot.website}
             target="_blank"
             rel="noreferrer"
-            className="flex items-center justify-between p-3 bg-blue-950/40 border border-blue-800/50 rounded-2xl text-blue-300 hover:bg-blue-900/50 transition-colors text-xs font-semibold"
+            className="flex items-center justify-between p-3 bg-blue-900/30 border border-blue-800/40 rounded-xl text-blue-300 hover:bg-blue-800/40 transition-colors text-xs font-semibold"
           >
             <span className="truncate pr-2">Website: {currentHotspot.website}</span>
             <ExternalLink className="w-4 h-4 shrink-0" />
@@ -116,7 +116,7 @@ export default function MapItemDrawerBlock({
 
         {/* Panoramas Carousel */}
         {panoramas.length > 0 && (
-          <div className="space-y-2 pt-2 border-t border-slate-800/80">
+          <div className="space-y-2 pt-2 border-t border-slate-700">
             <h3 className="font-semibold text-xs text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
               <Compass className="w-4 h-4 text-blue-400" />
               Ảnh VR 360° ({panoramas.length})
@@ -133,7 +133,7 @@ export default function MapItemDrawerBlock({
                       }}
                       className="pl-2 basis-1/2 sm:basis-1/3 cursor-pointer group"
                     >
-                      <div className="relative aspect-video rounded-xl overflow-hidden border border-slate-700 group-hover:border-blue-400 transition-all">
+                      <div className="relative aspect-video rounded-xl overflow-hidden border border-slate-700 group-hover:border-blue-500 transition-all">
                         <img
                           src={p.preview_image}
                           alt={p.title || ""}
@@ -156,13 +156,13 @@ export default function MapItemDrawerBlock({
 
       {/* Footer Action */}
       {currentHotspot.click_panorama_id && (
-        <div className="p-4 border-t border-slate-800/80 bg-slate-900/80">
+        <div className="p-4 border-t border-slate-700 bg-slate-800">
           <Button
             onClick={() => {
               showMedia(currentHotspot.click_panorama_id ?? "");
               closeDrawer();
             }}
-            className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-2xl py-2.5 gap-2 shadow-lg cursor-pointer"
+            className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl py-2.5 gap-2 shadow-lg cursor-pointer"
           >
             <RiDirectionFill className="w-5 h-5" /> Trải Nghiệm VR 360° Ngay
           </Button>

@@ -269,8 +269,8 @@ export default function MapDialogBlock({
 
             />
 
-            {/* Left Nav Drawer — list of hotspots, routes, nhà có công */}
-            <div className="absolute top-12 md:top-4 left-4 z-[1005]">
+            {/* Left sidebar — always visible when map is open */}
+            <div className="absolute top-12 md:top-4 left-4 bottom-4 z-[1005]">
               <LeftNavDrawerBlock showMedia={showMedia} />
             </div>
 
