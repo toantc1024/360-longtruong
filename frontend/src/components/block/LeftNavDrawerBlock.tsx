@@ -20,11 +20,14 @@ interface LeftNavDrawerBlockProps {
   showMedia: (mediaName: string) => void;
   /** When a map marker is clicked, show its detail */
   mapSelectedHotspot?: Hotspot | null;
+  /** Close the map dialog */
+  onCloseMap?: () => void;
 }
 
 export const LeftNavDrawerBlock: React.FC<LeftNavDrawerBlockProps> = ({
   showMedia,
   mapSelectedHotspot,
+  onCloseMap,
 }) => {
   const [activeTab, setActiveTab] = useState<"hotspots" | "routes" | "nhacocong">("hotspots");
   const [searchQuery, setSearchQuery] = useState("");
@@ -60,10 +63,11 @@ export const LeftNavDrawerBlock: React.FC<LeftNavDrawerBlockProps> = ({
     return (
       <button
         onClick={() => setCollapsed(false)}
-        className="w-10 h-10 bg-white border border-gray-200 rounded-xl shadow-lg flex items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors cursor-pointer"
+        className="h-10 px-4 bg-white border border-gray-200 rounded-xl shadow-lg flex items-center gap-2 text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
         title="Mở rộng"
       >
-        <FiChevronRight className="w-5 h-5" />
+        <span className="text-xs font-semibold whitespace-nowrap">Danh sách địa điểm</span>
+        <FiChevronRight className="w-4 h-4 shrink-0" />
       </button>
     );
   }
@@ -140,6 +144,7 @@ export const LeftNavDrawerBlock: React.FC<LeftNavDrawerBlockProps> = ({
                   onClick={() => {
                     showMedia(selectedItem.click_panorama_id);
                     setSelectedItem(null);
+                    if (onCloseMap) onCloseMap();
                   }}
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl py-2.5 cursor-pointer transition-colors"
                 >

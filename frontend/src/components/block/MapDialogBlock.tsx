@@ -261,7 +261,7 @@ export default function MapDialogBlock({
 
             {/* Left sidebar — always visible when map is open */}
             <div className="absolute top-12 md:top-4 left-4 bottom-4 z-[1005]">
-              <LeftNavDrawerBlock showMedia={showMedia} mapSelectedHotspot={mapSelectedHotspot} />
+              <LeftNavDrawerBlock showMedia={showMedia} mapSelectedHotspot={mapSelectedHotspot} onCloseMap={() => setOpened(false)} />
             </div>
 
 
