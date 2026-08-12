@@ -235,7 +235,7 @@ export default function MapDialogBlock({
                 </div>
                 <div class="marker-label">
                     <span class="marker-title font-bold text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded shadow-xs border border-amber-200">
-                        🎖️ ${item.ten_liet_si || item.nha_cua_ai}
+                        ${item.ten_liet_si || item.nha_cua_ai}
                     </span>
                 </div>
             `;
@@ -259,7 +259,7 @@ export default function MapDialogBlock({
             }
         });
 
-        // 3. Add Tuyến Đường markers & polylines with VR Long Trường logo
+        // 3. Add Tuyến Đường markers & polylines with VR Long Trường logo + Line hover highlight effect
         routes.forEach((route: any) => {
             if (route.points && route.points.length > 0) {
                 const coords: [number, number][] = route.points.map((p: any) =>
@@ -292,8 +292,24 @@ export default function MapDialogBlock({
                             paint: {
                                 'line-color': route.color || '#8b5cf6',
                                 'line-width': 4,
-                                'line-opacity': 0.8
+                                'line-opacity': 0.85
                             }
+                        });
+
+                        // Mouse hover on line
+                        mapRef.current.on('mouseenter', layerId, () => {
+                            const canvas = mapRef.current?.getCanvas();
+                            if (canvas) canvas.style.cursor = 'pointer';
+                            mapRef.current?.setPaintProperty(layerId, 'line-width', 9);
+                            mapRef.current?.setPaintProperty(layerId, 'line-opacity', 1.0);
+                            mapRef.current?.setPaintProperty(layerId, 'line-color', '#f59e0b');
+                        });
+                        mapRef.current.on('mouseleave', layerId, () => {
+                            const canvas = mapRef.current?.getCanvas();
+                            if (canvas) canvas.style.cursor = '';
+                            mapRef.current?.setPaintProperty(layerId, 'line-width', 4);
+                            mapRef.current?.setPaintProperty(layerId, 'line-opacity', 0.85);
+                            mapRef.current?.setPaintProperty(layerId, 'line-color', route.color || '#8b5cf6');
                         });
                     } catch (e) {
                         console.error("Error adding route layer:", e);
@@ -316,10 +332,26 @@ export default function MapDialogBlock({
                     </div>
                     <div class="marker-label">
                         <span class="marker-title font-bold text-purple-800 bg-purple-50 px-1.5 py-0.5 rounded shadow-xs border border-purple-200">
-                            🚩 Tuyến: ${route.name}
+                            Tuyến: ${route.name}
                         </span>
                     </div>
                 `;
+
+                    // Hovering pin marker highlights the route line and makes it thicker!
+                    element.addEventListener('mouseenter', () => {
+                        if (mapRef.current?.getLayer(layerId)) {
+                            mapRef.current.setPaintProperty(layerId, 'line-width', 9);
+                            mapRef.current.setPaintProperty(layerId, 'line-opacity', 1.0);
+                            mapRef.current.setPaintProperty(layerId, 'line-color', '#f59e0b');
+                        }
+                    });
+                    element.addEventListener('mouseleave', () => {
+                        if (mapRef.current?.getLayer(layerId)) {
+                            mapRef.current.setPaintProperty(layerId, 'line-width', 4);
+                            mapRef.current.setPaintProperty(layerId, 'line-opacity', 0.85);
+                            mapRef.current.setPaintProperty(layerId, 'line-color', route.color || '#8b5cf6');
+                        }
+                    });
 
                     element.addEventListener('click', () => {
                         mapRef.current?.flyTo({

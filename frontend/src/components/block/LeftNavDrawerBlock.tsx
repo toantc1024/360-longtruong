@@ -9,6 +9,7 @@ import {
   FiUser,
   FiChevronLeft,
   FiChevronRight,
+  FiHome,
 } from "react-icons/fi";
 import { Mail, Award, Navigation, ChevronRight } from "lucide-react";
 import useVRStore from "@/store/vr.store";
@@ -66,6 +67,11 @@ export const LeftNavDrawerBlock: React.FC<LeftNavDrawerBlockProps> = ({
         className="h-10 px-4 bg-white border border-gray-200 rounded-xl shadow-lg flex items-center gap-2 text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
         title="Mở rộng"
       >
+        <img
+          src="/android-chrome-512x512.png"
+          alt="Long Trường Logo"
+          className="w-5 h-5 rounded-full object-cover shrink-0"
+        />
         <span className="text-xs font-semibold whitespace-nowrap">Danh sách địa điểm</span>
         <FiChevronRight className="w-4 h-4 shrink-0" />
       </button>
@@ -75,8 +81,8 @@ export const LeftNavDrawerBlock: React.FC<LeftNavDrawerBlockProps> = ({
   return (
     <div className="w-[340px] sm:w-[400px] h-full flex flex-col bg-white text-gray-900 rounded-2xl border border-gray-200 shadow-2xl overflow-hidden">
 
-      {/* ── Header ── */}
-      <div className="flex items-center gap-3 p-4 pb-3 border-b border-gray-200">
+      {/* ── Header with Long Trường Logo ── */}
+      <div className="flex items-center gap-3 p-4 pb-3 border-b border-gray-200 bg-gray-50/50">
         {selectedItem ? (
           <button
             type="button"
@@ -86,17 +92,21 @@ export const LeftNavDrawerBlock: React.FC<LeftNavDrawerBlockProps> = ({
             <FiArrowLeft className="size-5" />
           </button>
         ) : (
-          <div className="w-9 h-9" />
+          <img
+            src="/android-chrome-512x512.png"
+            alt="Logo VR Long Trường"
+            className="w-9 h-9 rounded-full object-cover border border-gray-200 shrink-0 shadow-xs"
+          />
         )}
         <div className="flex-1 min-w-0">
-          <h2 className="font-bold text-base sm:text-lg text-gray-900 truncate">
+          <h2 className="font-bold text-base text-gray-900 truncate">
             {selectedItem
-              ? (selectedItem.title || selectedItem.name || selectedItem.nha_cua_ai || selectedItem.ten_liet_si)
-              : (currentArea?.area_name || "Long Trường")}
+              ? (selectedItem.ten_liet_si || selectedItem.name || selectedItem.title || selectedItem.nha_cua_ai)
+              : (currentArea?.area_name || "VR Long Trường")}
           </h2>
           <p className="text-xs text-gray-500 truncate">
             {selectedItem
-              ? (selectedItem.address || "Chi tiết")
+              ? (selectedItem.que_quan || selectedItem.address || "Chi tiết thông tin")
               : "Phường Long Trường"}
           </p>
         </div>
@@ -115,27 +125,25 @@ export const LeftNavDrawerBlock: React.FC<LeftNavDrawerBlockProps> = ({
       {selectedItem ? (
         <div className="flex-1 overflow-y-auto p-4 space-y-4 text-sm">
 
-          {/* Preview image */}
-          {selectedItem.preview_image && (
-            <img
-              src={selectedItem.preview_image}
-              alt={selectedItem.title}
-              className="w-full h-48 object-cover rounded-xl border border-gray-200"
-            />
-          )}
-
-          {/* Hotspot detail */}
+          {/* Hotspot detail specific VR button */}
           {selectedItem.hotspot_id && (
             <div className="space-y-3">
+              {selectedItem.preview_image && (
+                <img
+                  src={selectedItem.preview_image}
+                  alt={selectedItem.title}
+                  className="w-full h-44 object-cover rounded-xl border border-gray-200"
+                />
+              )}
               {selectedItem.description && (
                 <div
-                  className="text-gray-700 leading-relaxed bg-gray-50 p-3 rounded-xl border border-gray-200 text-xs"
+                  className="text-gray-700 leading-relaxed bg-gray-50 p-3.5 rounded-xl border border-gray-200 text-xs"
                   dangerouslySetInnerHTML={{ __html: selectedItem.description }}
                 />
               )}
               {selectedItem.address && (
-                <div className="flex items-center gap-2 text-gray-500 text-xs">
-                  <FiMapPin className="w-3.5 h-3.5" />
+                <div className="flex items-center gap-2 text-gray-600 text-xs">
+                  <FiMapPin className="w-4 h-4 text-blue-600 shrink-0" />
                   <span>{selectedItem.address}</span>
                 </div>
               )}
@@ -154,58 +162,88 @@ export const LeftNavDrawerBlock: React.FC<LeftNavDrawerBlockProps> = ({
             </div>
           )}
 
-          {/* NhaCoCong detail */}
-          {selectedItem.nha_cua_ai && (
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3 bg-gray-50 p-3 rounded-xl border border-gray-200">
-                <div>
-                  <span className="text-gray-500 text-xs flex items-center gap-1"><FiUser /> Chủ nhà</span>
-                  <p className="font-semibold text-gray-900 mt-0.5">{selectedItem.nha_cua_ai}</p>
+          {/* Unified Detail Card for NhaCoCong & Route */}
+          {(selectedItem.nha_cua_ai || selectedItem.points || selectedItem.ten_liet_si || (selectedItem.name && !selectedItem.hotspot_id)) && (
+            <div className="space-y-4">
+              <div className="bg-gray-50 p-3.5 rounded-2xl border border-gray-200 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${
+                    selectedItem.nha_cua_ai
+                      ? "bg-amber-100 text-amber-800 border border-amber-200"
+                      : "bg-purple-100 text-purple-800 border border-purple-200"
+                  }`}>
+                    {selectedItem.nha_cua_ai ? (
+                      <><Award className="w-3.5 h-3.5 text-amber-600 shrink-0" /> Nhà Có Công / Gia Đình Liệt Sĩ</>
+                    ) : (
+                      <><Navigation className="w-3.5 h-3.5 text-purple-600 shrink-0" /> Tuyến Đường Tham Quan</>
+                    )}
+                  </span>
+                  {selectedItem.color && (
+                    <div
+                      className="w-4 h-4 rounded-full border border-gray-300 shadow-xs shrink-0"
+                      style={{ backgroundColor: selectedItem.color }}
+                      title="Màu tuyến đường"
+                    />
+                  )}
                 </div>
-                {selectedItem.ten_liet_si && (
-                  <div>
-                    <span className="text-amber-600 text-xs flex items-center gap-1"><Award /> Liệt sĩ</span>
-                    <p className="font-semibold text-gray-900 mt-0.5">{selectedItem.ten_liet_si}</p>
-                  </div>
-                )}
-                {(selectedItem.ngay_sinh || selectedItem.ngay_mat) && (
-                  <div className="col-span-2">
-                    <span className="text-gray-500 text-xs flex items-center gap-1"><FiCalendar /> Sinh / Mất</span>
-                    <p className="font-semibold text-gray-900 mt-0.5">
-                      {selectedItem.ngay_sinh || "?"} — {selectedItem.ngay_mat || "?"}
-                    </p>
-                  </div>
-                )}
-              </div>
-              {selectedItem.tieu_su && (
-                <div className="space-y-1.5">
-                  <h4 className="font-semibold text-gray-500 text-xs">Tiểu Sử</h4>
-                  <div
-                    className="text-gray-700 leading-relaxed bg-gray-50 p-3 rounded-xl border border-gray-200 text-xs"
-                    dangerouslySetInnerHTML={{ __html: selectedItem.tieu_su }}
-                  />
-                </div>
-              )}
-              {selectedItem.que_quan && (
-                <div className="text-xs text-gray-500">
-                  <span className="font-medium">Quê quán:</span> {selectedItem.que_quan}
-                </div>
-              )}
-            </div>
-          )}
 
-          {/* Route detail */}
-          {selectedItem.points && (
-            <div className="space-y-3">
-              {selectedItem.description && (
-                <div
-                  className="text-gray-700 leading-relaxed bg-gray-50 p-3 rounded-xl border border-gray-200 text-xs"
-                  dangerouslySetInnerHTML={{ __html: selectedItem.description }}
-                />
-              )}
-              {selectedItem.points.length > 0 && (
-                <div className="text-xs text-gray-500">
-                  {selectedItem.points.length} điểm trên tuyến
+                <div>
+                  <h3 className="text-base font-bold text-gray-900 leading-snug">
+                    {selectedItem.ten_liet_si || selectedItem.name || selectedItem.nha_cua_ai}
+                  </h3>
+                  {selectedItem.nha_cua_ai && (
+                    <p className="text-xs text-gray-600 mt-1 font-medium flex items-center gap-1">
+                      <FiUser className="text-gray-400 shrink-0" /> Chủ hộ: <span className="text-gray-900 font-semibold">{selectedItem.nha_cua_ai}</span>
+                    </p>
+                  )}
+                </div>
+
+                {/* Grid info stats (Sinh / Mất, Quê quán, GPS / Số điểm) */}
+                <div className="grid grid-cols-1 gap-2 pt-2.5 border-t border-gray-200/80 text-xs text-gray-700">
+                  {(selectedItem.ngay_sinh || selectedItem.ngay_mat) && (
+                    <div className="flex items-center gap-2">
+                      <FiCalendar className="w-4 h-4 text-blue-600 shrink-0" />
+                      <span>
+                        <strong className="font-semibold text-gray-900">Sinh / Mất:</strong> {selectedItem.ngay_sinh || "??"} — {selectedItem.ngay_mat || "??"}
+                      </span>
+                    </div>
+                  )}
+
+                  {selectedItem.que_quan && (
+                    <div className="flex items-start gap-2">
+                      <FiMapPin className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+                      <span>
+                        <strong className="font-semibold text-gray-900">Quê quán:</strong> {selectedItem.que_quan}
+                      </span>
+                    </div>
+                  )}
+
+                  {selectedItem.latitude && selectedItem.longitude && (
+                    <div className="flex items-center gap-2 text-emerald-700 font-mono text-[11px]">
+                      <FiMapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span>GPS: {selectedItem.latitude.toFixed(5)}, {selectedItem.longitude.toFixed(5)}</span>
+                    </div>
+                  )}
+
+                  {selectedItem.points && selectedItem.points.length > 0 && (
+                    <div className="flex items-center gap-2 text-purple-700 font-semibold text-xs">
+                      <Navigation className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                      <span>Các điểm nối tuyến: {selectedItem.points.length} điểm</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Description / Biography */}
+              {(selectedItem.tieu_su || selectedItem.description) && (
+                <div className="space-y-1.5">
+                  <h4 className="font-bold text-gray-700 text-xs uppercase tracking-wider">
+                    {selectedItem.tieu_su ? "Tiểu Sử Chi Tiết" : "Mô Tả Tuyến Đường"}
+                  </h4>
+                  <div
+                    className="text-gray-800 leading-relaxed bg-gray-50 p-3.5 rounded-2xl border border-gray-200 text-xs space-y-2"
+                    dangerouslySetInnerHTML={{ __html: selectedItem.tieu_su || selectedItem.description }}
+                  />
                 </div>
               )}
             </div>
@@ -214,14 +252,15 @@ export const LeftNavDrawerBlock: React.FC<LeftNavDrawerBlockProps> = ({
           {/* Image Gallery */}
           {selectedItem.images && selectedItem.images.length > 0 && (
             <div className="space-y-2 pt-2 border-t border-gray-200">
-              <h4 className="font-semibold text-gray-500 text-xs">Hình Ảnh</h4>
+              <h4 className="font-bold text-gray-700 text-xs uppercase tracking-wider">Hình Ảnh Thư Viện ({selectedItem.images.length})</h4>
               <div className="grid grid-cols-2 gap-2">
                 {selectedItem.images.map((imgUrl: string, idx: number) => (
                   <img
                     key={idx}
                     src={imgUrl}
                     alt="Hình ảnh"
-                    className="w-full h-32 object-cover rounded-xl border border-gray-200"
+                    className="w-full h-28 object-cover rounded-xl border border-gray-200 hover:scale-102 transition-transform shadow-xs cursor-pointer"
+                    onClick={() => window.open(imgUrl, "_blank")}
                   />
                 ))}
               </div>
@@ -327,10 +366,10 @@ export const LeftNavDrawerBlock: React.FC<LeftNavDrawerBlockProps> = ({
                   <div
                     key={route.id}
                     onClick={() => setSelectedItem(route)}
-                    className="p-3 rounded-xl bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-all cursor-pointer flex items-center gap-3"
+                    className="p-3 rounded-xl bg-gray-50 border border-gray-200 hover:bg-purple-50 hover:border-purple-200 transition-all cursor-pointer flex items-center gap-3 group"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-emerald-100 border border-emerald-200 flex items-center justify-center shrink-0">
-                      <Navigation className="w-5 h-5 text-emerald-600" />
+                    <div className="w-10 h-10 rounded-xl bg-purple-100 border border-purple-200 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                      <Navigation className="w-5 h-5 text-purple-600" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="text-xs font-bold text-gray-900 truncate">{route.name}</h3>
@@ -338,7 +377,7 @@ export const LeftNavDrawerBlock: React.FC<LeftNavDrawerBlockProps> = ({
                         {route.description ? route.description.replace(/<[^>]*>?/gm, '') : "Tuyến tham quan"}
                       </p>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />
+                    <ChevronRight className="w-4 h-4 text-gray-400 shrink-0 group-hover:text-purple-600 transition-colors" />
                   </div>
                 ))
               )
@@ -353,9 +392,9 @@ export const LeftNavDrawerBlock: React.FC<LeftNavDrawerBlockProps> = ({
                   <div
                     key={item.id}
                     onClick={() => setSelectedItem(item)}
-                    className="p-3 rounded-xl bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-all cursor-pointer flex items-center gap-3"
+                    className="p-3 rounded-xl bg-gray-50 border border-gray-200 hover:bg-amber-50 hover:border-amber-200 transition-all cursor-pointer flex items-center gap-3 group"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-amber-100 border border-amber-200 flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-amber-100 border border-amber-200 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                       <Award className="w-5 h-5 text-amber-600" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -366,7 +405,7 @@ export const LeftNavDrawerBlock: React.FC<LeftNavDrawerBlockProps> = ({
                         Chủ hộ: {item.nha_cua_ai}
                       </p>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />
+                    <ChevronRight className="w-4 h-4 text-gray-400 shrink-0 group-hover:text-amber-600 transition-colors" />
                   </div>
                 ))
               )
@@ -379,7 +418,7 @@ export const LeftNavDrawerBlock: React.FC<LeftNavDrawerBlockProps> = ({
               className="w-full h-9 bg-gray-100 hover:bg-gray-200 border border-gray-200 text-gray-700 rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-colors"
               onClick={() => navigate("/")}
             >
-              <span className="text-blue-600">⌂</span>
+              <FiHome className="size-4 text-blue-600" />
               <span>Trang chủ</span>
             </Button>
             <Button
