@@ -184,10 +184,15 @@ export const GlobalAudioManager: React.FC = () => {
       log("BG ducked to", BG_DUCKED);
     }
 
-    // On speech ended → restore BG
+    // On speech ended → clear timestamp (next play starts from beginning), restore BG
     speech.onended = () => {
       if (myVersion !== _speechVersion) return; // stale
-      log("Speech ended");
+      log("Speech ended — clearing timestamp for next play from start");
+      // Clear timestamp so re-entering plays from 0
+      const ts = useAudioStore.getState().speechTimestamps;
+      const next = { ...ts };
+      delete next[hotspotId];
+      useAudioStore.getState().updateSpeechTimestamp(next);
       if (_bgAudio) {
         _bgAudio.volume = BG_VOLUME;
         log("BG volume restored to", BG_VOLUME);
