@@ -6,12 +6,7 @@ import { Button } from "../ui/button";
 
 export const GlobalAudioManager: React.FC = () => {
   const { currentArea, currentHotspot } = useVRStore();
-  const {
-    isPlaying,
-    isMutedAll,
-    speechTimestamps,
-    updateSpeechTimestamp,
-  } = useAudioStore();
+  const { isPlaying, isMutedAll } = useAudioStore();
 
   const bgAudioRef = useRef<HTMLAudioElement | null>(null);
   const speechAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -56,7 +51,8 @@ export const GlobalAudioManager: React.FC = () => {
       if (bgAudioRef.current) bgAudioRef.current.pause();
       const audio = new Audio(bgMusicUrl);
       audio.loop = true;
-      audio.volume = speechAudioRef.current ? 0.15 : 0.8;
+      // If speech audio is currently playing, duck background music volume to 0.15
+      audio.volume = speechAudioRef.current && !speechAudioRef.current.paused ? 0.15 : 0.8;
       bgAudioRef.current = audio;
 
       if (!isMutedAll && isPlaying) {
@@ -70,10 +66,11 @@ export const GlobalAudioManager: React.FC = () => {
   const hotspotId = currentHotspot?.hotspot_id;
 
   useEffect(() => {
+    // Case 1: No active hotspot or no audio URL for current hotspot
     if (!hotspotId || !hotspotAudioUrl) {
       if (speechAudioRef.current) {
         if (activeHotspotIdRef.current) {
-          updateSpeechTimestamp(
+          useAudioStore.getState().updateSpeechTimestamp(
             activeHotspotIdRef.current,
             speechAudioRef.current.currentTime || 0
           );
@@ -81,21 +78,22 @@ export const GlobalAudioManager: React.FC = () => {
         speechAudioRef.current.pause();
         speechAudioRef.current = null;
       }
-      // Restore background audio volume to normal
+      // Restore background music volume to normal 0.8 when no speech is active
       if (bgAudioRef.current && !isMutedAll && isPlaying) {
         bgAudioRef.current.volume = 0.8;
         bgAudioRef.current.play().catch(console.warn);
       }
+      activeHotspotIdRef.current = null;
       return;
     }
 
-    // Save previous speech timestamp if changing hotspot
+    // Case 2: Switching from previous hotspot to a new hotspot
     if (
       speechAudioRef.current &&
       activeHotspotIdRef.current &&
       activeHotspotIdRef.current !== hotspotId
     ) {
-      updateSpeechTimestamp(
+      useAudioStore.getState().updateSpeechTimestamp(
         activeHotspotIdRef.current,
         speechAudioRef.current.currentTime || 0
       );
@@ -105,30 +103,37 @@ export const GlobalAudioManager: React.FC = () => {
 
     activeHotspotIdRef.current = hotspotId;
 
+    // Create & initialize speech audio if not already playing this source
     if (!speechAudioRef.current || speechAudioRef.current.src !== hotspotAudioUrl) {
       const speech = new Audio(hotspotAudioUrl);
       speechAudioRef.current = speech;
 
-      // Resume from previous timestamp in session if exists
-      const savedTime = speechTimestamps[hotspotId] || 0;
+      // Resume from saved timestamp for this hotspot if available
+      const savedTimestamps = useAudioStore.getState().speechTimestamps;
+      const savedTime = savedTimestamps[hotspotId] || 0;
       if (savedTime > 0) {
         speech.currentTime = savedTime;
       }
 
-      // Lower bg audio volume while speech is playing (ducking)
+      // Duck background music volume (lower to 0.15) while speech plays
       if (bgAudioRef.current) {
         bgAudioRef.current.volume = 0.15;
       }
 
+      // When speech finishes, restore background music volume to 0.8
       speech.onended = () => {
         if (bgAudioRef.current && !isMutedAll && isPlaying) {
           bgAudioRef.current.volume = 0.8;
         }
       };
 
+      // Continuously record speech progress timestamp
       speech.ontimeupdate = () => {
         if (speechAudioRef.current) {
-          updateSpeechTimestamp(hotspotId, speechAudioRef.current.currentTime);
+          useAudioStore.getState().updateSpeechTimestamp(
+            hotspotId,
+            speechAudioRef.current.currentTime
+          );
         }
       };
 
