@@ -24,7 +24,7 @@ export interface TuyenDuong {
 }
 
 export interface AreaMetadata {
-  bg_music_url?: string;
+  bg_music_url?: string | null;
   nha_co_cong?: NhaCoCong[];
   tuyen_duong?: TuyenDuong[];
   [key: string]: any;
