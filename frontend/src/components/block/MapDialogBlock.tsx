@@ -6,10 +6,9 @@ import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import useVRStore from "@/store/vr.store";
 import { Search } from "lucide-react";
-import MapItemDrawerBlock from "./MapItemDrawerBlock";
 import LeftNavDrawerBlock from "./LeftNavDrawerBlock";
 import { FiLogOut } from "react-icons/fi";
-import type { Hotspot } from "@/types/hotspots.service.type";
+
 
 export default function MapDialogBlock({
     opened,
@@ -24,7 +23,6 @@ export default function MapDialogBlock({
         if (hotspot.geolocation?.lon && hotspot.geolocation?.lat) {
             // Set selected hotspot for highlighting
             setSelectedHotspotId(hotspot.hotspot_id);
-            setSelectedMarker(hotspot);
 
             // Fly to the hotspot location
             mapRef.current?.flyTo({
@@ -53,7 +51,6 @@ export default function MapDialogBlock({
 
     useEffect(() => {
         if (!opened) {
-            setSelectedMarker(null);
             setSelectedHotspotId(null);
         }
     }, [opened])
@@ -61,7 +58,6 @@ export default function MapDialogBlock({
     const [searchValue, setSearchValue] = useState("");
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [selectedHotspotId, setSelectedHotspotId] = useState<number | null>(null);
-    const [selectedMarker, setSelectedMarker] = useState<any>(null);
     // Filter hotspots based on search value
     const filteredHotspots = useMemo(() => {
         if (!searchValue.trim()) return [];
@@ -260,14 +256,6 @@ export default function MapDialogBlock({
             className={`${opened ? "visible" : "hidden"
                 } fixed top-0 left-0 right-0 bottom-0 flex items-center justify-center backdrop-blur-sm z-[999]`}
         >
-
-            <MapItemDrawerBlock closeDrawer={() => { setOpened(false) }} setCurrentHotspot={(hotspot: Hotspot | null) => {
-                setSelectedMarker(hotspot);
-                setSelectedHotspotId(hotspot?.hotspot_id ?? null);
-            }} currentHotspot={selectedMarker}
-                showMedia={showMedia}
-
-            />
 
             {/* Left sidebar — always visible when map is open */}
             <div className="absolute top-12 md:top-4 left-4 bottom-4 z-[1005]">

@@ -7,8 +7,9 @@ import {
   FiSearch,
   FiCalendar,
   FiUser,
+  FiChevronLeft,
+  FiChevronRight,
 } from "react-icons/fi";
-import { RiGlobalFill } from "react-icons/ri";
 import { Mail, Award, Navigation, ChevronRight } from "lucide-react";
 import useVRStore from "@/store/vr.store";
 import { useNavigate } from "react-router-dom";
@@ -24,6 +25,7 @@ export const LeftNavDrawerBlock: React.FC<LeftNavDrawerBlockProps> = ({
   const [activeTab, setActiveTab] = useState<"hotspots" | "routes" | "nhacocong">("hotspots");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
+  const [collapsed, setCollapsed] = useState(false);
 
   const { currentArea, areaHotspots, currentHotspot } = useVRStore();
   const navigate = useNavigate();
@@ -42,6 +44,19 @@ export const LeftNavDrawerBlock: React.FC<LeftNavDrawerBlockProps> = ({
       .toLowerCase()
       .includes(searchQuery.toLowerCase())
   );
+
+  // Collapsed state: just show a thin bar with toggle button
+  if (collapsed) {
+    return (
+      <button
+        onClick={() => setCollapsed(false)}
+        className="w-10 h-10 bg-slate-900 border border-slate-700 rounded-xl shadow-xl flex items-center justify-center text-slate-300 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+        title="Mở rộng"
+      >
+        <FiChevronRight className="w-5 h-5" />
+      </button>
+    );
+  }
 
   return (
     <div className="w-[340px] sm:w-[400px] h-full flex flex-col bg-slate-900 text-slate-100 rounded-2xl border border-slate-700 shadow-2xl overflow-hidden">
@@ -62,31 +77,42 @@ export const LeftNavDrawerBlock: React.FC<LeftNavDrawerBlockProps> = ({
         <div className="flex-1 min-w-0">
           <h2 className="font-bold text-base sm:text-lg text-white truncate">
             {selectedItem
-              ? (selectedItem.ten_liet_si || selectedItem.name || selectedItem.nha_cua_ai || selectedItem.title)
-              : "Khám Phá VR"}
+              ? (selectedItem.title || selectedItem.name || selectedItem.nha_cua_ai || selectedItem.ten_liet_si)
+              : (currentArea?.area_name || "Long Trường")}
           </h2>
           <p className="text-xs text-slate-400 truncate">
             {selectedItem
               ? (selectedItem.address || "Chi tiết")
-              : (currentArea?.area_name || "Long Trường")}
+              : "Phường Long Trường"}
           </p>
         </div>
+        {!selectedItem && (
+          <button
+            onClick={() => setCollapsed(true)}
+            className="w-9 h-9 bg-slate-800 hover:bg-slate-700 rounded-full flex items-center justify-center text-slate-300 hover:text-white cursor-pointer shrink-0 transition-colors"
+            title="Thu nhỏ"
+          >
+            <FiChevronLeft className="w-5 h-5" />
+          </button>
+        )}
       </div>
 
       {/* ── Detail View ── */}
       {selectedItem ? (
         <div className="flex-1 overflow-y-auto p-4 space-y-4 text-sm">
 
+          {/* Preview image */}
+          {selectedItem.preview_image && (
+            <img
+              src={selectedItem.preview_image}
+              alt={selectedItem.title}
+              className="w-full h-48 object-cover rounded-xl border border-slate-700"
+            />
+          )}
+
           {/* Hotspot detail */}
           {selectedItem.hotspot_id && (
             <div className="space-y-3">
-              {selectedItem.preview_image && (
-                <img
-                  src={selectedItem.preview_image}
-                  alt={selectedItem.title}
-                  className="w-full h-48 object-cover rounded-xl border border-slate-700"
-                />
-              )}
               {selectedItem.description && (
                 <div
                   className="text-slate-300 leading-relaxed bg-slate-800 p-3 rounded-xl border border-slate-700 text-xs"
@@ -201,7 +227,7 @@ export const LeftNavDrawerBlock: React.FC<LeftNavDrawerBlockProps> = ({
               }`}
             >
               <FiMapPin className="w-3.5 h-3.5" />
-              <span>Địa điểm ({areaHotspots.length})</span>
+              <span>Địa điểm</span>
             </button>
             <button
               type="button"
@@ -213,7 +239,7 @@ export const LeftNavDrawerBlock: React.FC<LeftNavDrawerBlockProps> = ({
               }`}
             >
               <Navigation className="w-3.5 h-3.5" />
-              <span>Tuyến ({routes.length})</span>
+              <span>Tuyến</span>
             </button>
             <button
               type="button"
@@ -225,7 +251,7 @@ export const LeftNavDrawerBlock: React.FC<LeftNavDrawerBlockProps> = ({
               }`}
             >
               <Award className="w-3.5 h-3.5" />
-              <span>Nhà có công ({nhaCoCongList.length})</span>
+              <span>Nhà có công</span>
             </button>
           </div>
 
@@ -338,7 +364,7 @@ export const LeftNavDrawerBlock: React.FC<LeftNavDrawerBlockProps> = ({
               className="w-full h-9 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-colors"
               onClick={() => navigate("/")}
             >
-              <RiGlobalFill className="size-4 text-blue-400" />
+              <span className="text-blue-400">⌂</span>
               <span>Trang chủ</span>
             </Button>
             <Button
