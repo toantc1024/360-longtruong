@@ -2,15 +2,12 @@ import React, { useEffect, useState } from "react";
 import { Button } from "../ui/button";
 import AbsoluteWrapper from "../ui/absolute-wrapper";
 import {
-  FiArrowLeft,
   FiHome,
-  FiMenu,
   FiShare2,
   FiChevronUp,
   FiChevronDown,
 } from "react-icons/fi";
-import { Mail, Map } from "lucide-react";
-import { Drawer } from "vaul";
+import { Map } from "lucide-react";
 import { PiInfoFill } from "react-icons/pi";
 import useVRStore from "@/store/vr.store";
 import { Check, ChevronsUpDown } from "lucide-react";
@@ -34,10 +31,9 @@ import SearchDialogBlock from "./SearchDialogBlock";
 import PanoramaCarouselBlock from "./PanoramaCarouselBlock";
 import ChatbotDialogBlock from "./ChatbotDialogBlock";
 import TutorialDialogBlock from "./TutorialDialogBlock";
-import { RiGlobalFill } from "react-icons/ri";
 import MapDialogBlock from "./MapDialogBlock";
-import { useNavigate } from "react-router-dom";
 import AssetActionPillBlock from "./AssetActionPillBlock";
+import LeftNavDrawerBlock from "./LeftNavDrawerBlock";
 
 const ControlBlock = ({
   showMedia,
@@ -60,7 +56,6 @@ const ControlBlock = ({
     setCurrentPanoramaById,
     panoramas,
   } = useVRStore((state) => state);
-  const navigate = useNavigate();
   const actionPills = [
     {
       id: "introduction",
@@ -88,61 +83,7 @@ const ControlBlock = ({
         left="0"
         customClassName="glass flex m-1 md:m-2 items-center px-1 md:px-2 h-auto rounded-4xl py-1 md:py-2 flex gap-1 md:gap-2 flex-col shadow-sm"
       >
-        <Drawer.Root direction="left">
-          <Drawer.Trigger asChild>
-            <Button
-              className="w-10 h-10 md:w-12 lg:w-14 md:h-12 lg:h-14 shadow-lg rounded-full hover:bg-black/10 bg-black/30 ring-1 ring-black/10 flex items-center justify-center"
-              aria-label="Menu"
-            >
-              <FiMenu className="!size-5 md:!size-7 lg:!size-9" />
-            </Button>
-          </Drawer.Trigger>
-          <Drawer.Portal>
-            <Drawer.Overlay className="fixed inset-0 z-[10] backdrop-blur-xl bg-black/40" />
-            <Drawer.Content
-              className="left-1 md:left-2 top-1 md:top-2 bottom-1 md:bottom-2 fixed z-10 outline-none w-[280px] md:w-[310px] flex"
-              style={
-                {
-                  "--initial-transform": "calc(100% + 8px)",
-                } as React.CSSProperties
-              }
-            >
-              <div className="h-full w-full grow p-4 md:p-5 flex flex-col rounded-[16px] glass">
-                <div className="">
-                  <Drawer.Title className="flex items-center font-medium mb-4 text-white text-lg md:text-xl">
-                    <Drawer.Close>
-                      <Button className="w-10 h-10 md:w-12 md:h-12 glass-hover glass rounded-full p-2">
-                        <FiArrowLeft className="!size-6 md:!size-8" />
-                      </Button>
-                    </Drawer.Close>
-                    <div className="ml-3 md:ml-4">Tùy chọn</div>
-                  </Drawer.Title>
-                  <div className="space-y-3">
-                    <Button
-                      className="w-full h-10 md:h-12 text-left flex items-center justify-start gap-3 glass text-white rounded-full glass glass-hover text-sm md:text-base"
-                      onClick={() => {
-                        navigate("/");
-                      }}
-                    >
-                      <RiGlobalFill className="size-4 md:size-5" />
-                      Về trang chủ
-                    </Button>
-                    <Button
-                      className="w-full h-10 md:h-12 text-left flex items-center justify-start gap-3 glass text-white rounded-full glass glass-hover text-sm md:text-base"
-                      onClick={() => {
-                        // mailto
-                        window.location.href = "mailto:vrdiachido@gmail.com";
-                      }}
-                    >
-                      <Mail className="size-4 md:size-5" />
-                      Góp ý
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </Drawer.Content>
-          </Drawer.Portal>
-        </Drawer.Root>
+        <LeftNavDrawerBlock showMedia={showMedia} />
 
         {/* Top left nav */}
         {[
