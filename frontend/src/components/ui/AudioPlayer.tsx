@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Play, Pause, Volume2, VolumeX, RotateCcw, Volume1, Sparkles } from "lucide-react";
+import { Play, Pause, Volume2, VolumeX, RotateCcw, Volume1, Music } from "lucide-react";
 
 interface AudioPlayerProps {
   src: string;
@@ -110,12 +110,12 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
       {/* Header title & Playing badge */}
       <div className="flex items-center justify-between text-xs font-semibold">
         <div className="flex items-center gap-2 truncate text-amber-400">
-          <Sparkles className="w-4 h-4 text-amber-400 animate-pulse shrink-0" />
+          <Music className="w-4 h-4 text-amber-400 shrink-0" />
           <span className="truncate font-bold">{title || "Thuyết minh địa điểm"}</span>
         </div>
         {isPlaying && (
           <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-bold border border-emerald-500/30">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
             Đang phát
           </div>
         )}
@@ -131,7 +131,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
           onChange={handleSeek}
           className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
         />
-        <div className="flex justify-between text-[11px] text-slate-400 font-mono">
+        <div className="flex justify-between text-[11px] text-slate-400">
           <span>{formatTime(currentTime)}</span>
           <span>{formatTime(duration)}</span>
         </div>
