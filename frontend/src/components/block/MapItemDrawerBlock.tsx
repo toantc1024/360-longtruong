@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import type { Hotspot } from "@/types/hotspots.service.type";
-import { MapPin, X, Compass, ExternalLink } from "lucide-react";
+import { MapPin, X, Compass, ExternalLink, Music } from "lucide-react";
 import { Button } from "../ui/button";
 import { RiDirectionFill } from "react-icons/ri";
 import {
@@ -12,7 +12,6 @@ import {
 } from "../ui/carousel";
 import type { Panorama } from "@/types/panoramas.service.type";
 import { getPanoramasByHotspotId } from "@/services/panoramas.service";
-import AudioPlayer from "../ui/AudioPlayer";
 
 export default function MapItemDrawerBlock({
   currentHotspot,
@@ -83,13 +82,12 @@ export default function MapItemDrawerBlock({
           </div>
         )}
 
-        {/* Audio Thuyết Minh Player */}
+        {/* Audio Thuyết Minh indicator — playback handled by GlobalAudioManager */}
         {audioUrl && (
-          <AudioPlayer
-            src={audioUrl}
-            title={`Thuyết minh: ${currentHotspot.title || "Địa điểm"}`}
-            autoPlay={true}
-          />
+          <div className="flex items-center gap-2 p-3 bg-emerald-950/40 border border-emerald-800/50 rounded-2xl text-emerald-300 text-xs font-semibold">
+            <Music className="w-4 h-4 shrink-0" />
+            <span>Đang phát thuyết minh: {currentHotspot.title || "Địa điểm"}</span>
+          </div>
         )}
 
         {/* Description */}
