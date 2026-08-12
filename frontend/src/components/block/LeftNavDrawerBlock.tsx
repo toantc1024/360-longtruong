@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -14,13 +14,17 @@ import { Mail, Award, Navigation, ChevronRight } from "lucide-react";
 import useVRStore from "@/store/vr.store";
 import { useNavigate } from "react-router-dom";
 import type { NhaCoCong, TuyenDuong } from "@/types/area.service.type";
+import type { Hotspot } from "@/types/hotspots.service.type";
 
 interface LeftNavDrawerBlockProps {
   showMedia: (mediaName: string) => void;
+  /** When a map marker is clicked, show its detail */
+  mapSelectedHotspot?: Hotspot | null;
 }
 
 export const LeftNavDrawerBlock: React.FC<LeftNavDrawerBlockProps> = ({
   showMedia,
+  mapSelectedHotspot,
 }) => {
   const [activeTab, setActiveTab] = useState<"hotspots" | "routes" | "nhacocong">("hotspots");
   const [searchQuery, setSearchQuery] = useState("");
@@ -29,6 +33,13 @@ export const LeftNavDrawerBlock: React.FC<LeftNavDrawerBlockProps> = ({
 
   const { currentArea, areaHotspots, currentHotspot } = useVRStore();
   const navigate = useNavigate();
+
+  // When map marker is clicked, show detail in panel
+  useEffect(() => {
+    if (mapSelectedHotspot) {
+      setSelectedItem(mapSelectedHotspot);
+    }
+  }, [mapSelectedHotspot]);
 
   const routes: TuyenDuong[] = currentArea?.metadata?.tuyen_duong || [];
   const nhaCoCongList: NhaCoCong[] = currentArea?.metadata?.nha_co_cong || [];

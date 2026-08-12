@@ -23,6 +23,7 @@ export default function MapDialogBlock({
         if (hotspot.geolocation?.lon && hotspot.geolocation?.lat) {
             // Set selected hotspot for highlighting
             setSelectedHotspotId(hotspot.hotspot_id);
+            setMapSelectedHotspot(hotspot);
 
             // Fly to the hotspot location
             mapRef.current?.flyTo({
@@ -58,6 +59,7 @@ export default function MapDialogBlock({
     const [searchValue, setSearchValue] = useState("");
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [selectedHotspotId, setSelectedHotspotId] = useState<number | null>(null);
+    const [mapSelectedHotspot, setMapSelectedHotspot] = useState<any>(null);
     // Filter hotspots based on search value
     const filteredHotspots = useMemo(() => {
         if (!searchValue.trim()) return [];
@@ -259,7 +261,7 @@ export default function MapDialogBlock({
 
             {/* Left sidebar — always visible when map is open */}
             <div className="absolute top-12 md:top-4 left-4 bottom-4 z-[1005]">
-              <LeftNavDrawerBlock showMedia={showMedia} />
+              <LeftNavDrawerBlock showMedia={showMedia} mapSelectedHotspot={mapSelectedHotspot} />
             </div>
 
 
