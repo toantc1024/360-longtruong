@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import VRCoreIframeBlock from "../block/VRCoreIframeBlock";
 import ControlBlock from "../block/ControlBlock";
 import { useViewportHeight } from "@/hooks/useViewportHeight";
@@ -10,9 +10,14 @@ import "./VRPage.module.css";
 import { useSearchParams } from "react-router-dom";
 import { Drawer } from "vaul";
 import AssetDrawerBlock from "../block/AssetDrawerBlock";
+
+const TAG = "[VRPage]";
+const log = (...args: any[]) => console.log(TAG, ...args);
+
 const VRPage = () => {
   const iframeRef = React.useRef<HTMLIFrameElement>(null);
   const [isFadingOut, setIsFadingOut] = useState(false);
+
   const {
     showMedia,
     onMessage: registerMessageHandler,
@@ -22,75 +27,143 @@ const VRPage = () => {
   } = use3DVistaHook({
     ref: iframeRef as React.RefObject<HTMLIFrameElement>,
   });
+
   const {
     isLoading,
     currentHotspot,
+    currentPanorama,
     getHotspotById,
     setCurrentHotspotById,
     setPanoramasByHotspotId,
     setCurrentPanorama,
     getPanoramaById,
   } = useVRStore((state) => state);
-  const { currentAsset, setCurrentAsset } = useAssetStore((state) => state);
-  let [searchParams, _] = useSearchParams();
 
+  const { currentAsset, setCurrentAsset } = useAssetStore((state) => state);
+  const [searchParams] = useSearchParams();
+
+  // ── Refs for stable access in callbacks ──
+  const getPanoramaByIdRef = useRef(getPanoramaById);
+  const setCurrentHotspotByIdRef = useRef(setCurrentHotspotById);
+  const setCurrentPanoramaRef = useRef(setCurrentPanorama);
+  const currentHotspotRef = useRef(currentHotspot);
+
+  useEffect(() => { getPanoramaByIdRef.current = getPanoramaById; }, [getPanoramaById]);
+  useEffect(() => { setCurrentHotspotByIdRef.current = setCurrentHotspotById; }, [setCurrentHotspotById]);
+  useEffect(() => { setCurrentPanoramaRef.current = setCurrentPanorama; }, [setCurrentPanorama]);
+  useEffect(() => { currentHotspotRef.current = currentHotspot; }, [currentHotspot]);
+
+  // ── 1. Handle search params (deep link) ──
   useEffect(() => {
-    let hotspot_id = searchParams.get("hotspot_id");
+    const hotspot_id = searchParams.get("hotspot_id");
     if (hotspot_id) {
-      let hotspot_id_number = Number(hotspot_id);
-      let hotspot = getHotspotById(hotspot_id_number);
-      showMedia(hotspot?.click_panorama_id || "");
+      const hotspot_id_number = Number(hotspot_id);
+      const hotspot = getHotspotById(hotspot_id_number);
+      if (hotspot?.click_panorama_id) {
+        log("Deep link: showing hotspot panorama", hotspot.click_panorama_id);
+        showMedia(hotspot.click_panorama_id);
+      }
     } else {
-      let panorama_id = searchParams.get("panorama_id");
+      const panorama_id = searchParams.get("panorama_id");
       if (panorama_id) {
-        showMedia(panorama_id || "");
+        log("Deep link: showing panorama", panorama_id);
+        showMedia(panorama_id);
       }
     }
   }, [searchParams, isLoading]);
 
+  // ── 2. Loading fade effect ──
   useEffect(() => {
     if (!isLoading) {
       setIsFadingOut(true);
-
-      const timer = setTimeout(() => {
-        setIsFadingOut(false);
-      }, 300);
+      const timer = setTimeout(() => setIsFadingOut(false), 300);
       return () => clearTimeout(timer);
     } else {
       setIsFadingOut(false);
     }
   }, [isLoading]);
 
+  // ── 3. Fetch panoramas when currentHotspot changes ──
   useEffect(() => {
     (async () => {
       if (currentHotspot) {
+        log("Fetching panoramas for hotspot:", currentHotspot.hotspot_id, currentHotspot.title);
         await setPanoramasByHotspotId(currentHotspot.hotspot_id);
+        log("Panoramas loaded for hotspot:", currentHotspot.hotspot_id);
       }
     })();
   }, [currentHotspot]);
-  useEffect(() => {
-    const handlePanoramaChange = async (panoramaInfo: any) => {
-      const panorama = getPanoramaById(panoramaInfo.data.label);
-      if (panorama) {
-        const resolvedPanorama = await panorama;
-        if (resolvedPanorama) {
-          setCurrentHotspotById(resolvedPanorama.hotspot_id);
-          setCurrentPanorama(resolvedPanorama);
-        }
+
+  // ── 4. Handle panorama_change from 3DVista iframe ──
+  const handlePanoramaChange = useCallback(async (panoramaInfo: any) => {
+    const panoramaId = panoramaInfo?.data?.label;
+    if (!panoramaId) {
+      log("panorama_change: no panorama label in payload", panoramaInfo);
+      return;
+    }
+
+    log("panorama_change received:", panoramaId);
+
+    try {
+      // Use refs to avoid stale closures
+      const panorama = await getPanoramaByIdRef.current(panoramaId);
+
+      if (!panorama) {
+        log("panorama_change: panorama NOT FOUND for id:", panoramaId);
+        return;
       }
-    };
+
+      log("panorama_change: resolved panorama:", {
+        id: panorama.panorama_id,
+        title: panorama.title,
+        hotspot_id: panorama.hotspot_id,
+      });
+
+      // Check if hotspot actually changed
+      const prevHotspotId = currentHotspotRef.current?.hotspot_id;
+      if (prevHotspotId === panorama.hotspot_id) {
+        log("panorama_change: same hotspot, only updating panorama");
+        setCurrentPanoramaRef.current(panorama);
+        return;
+      }
+
+      log(`panorama_change: hotspot CHANGED ${prevHotspotId} → ${panorama.hotspot_id}`);
+      setCurrentHotspotByIdRef.current(panorama.hotspot_id);
+      setCurrentPanoramaRef.current(panorama);
+    } catch (err) {
+      log("panorama_change: ERROR", err);
+    }
+  }, []); // Empty deps — uses refs
+
+  // Register via 3DVista hook message system
+  useEffect(() => {
     registerMessageHandler("panorama_change", handlePanoramaChange);
-    const handleDirectMessage = async (event: any) => {
-      if (event.data && event.data.type === "panorama_change") {
-        const panoramaInfo = event.data.payload;
-        await handlePanoramaChange(panoramaInfo);
+  }, [registerMessageHandler, handlePanoramaChange]);
+
+  // Also register via raw window.addEventListener (fallback — 3DVista may post directly)
+  useEffect(() => {
+    const handleDirectMessage = (event: MessageEvent) => {
+      if (event.data?.type === "panorama_change") {
+        log("Direct panorama_change message received via window.addEventListener");
+        handlePanoramaChange(event.data.payload);
       }
     };
     window.addEventListener("message", handleDirectMessage);
-    return () => {
-      window.removeEventListener("message", handleDirectMessage);
-    };
-  }, [registerMessageHandler]);
+    return () => window.removeEventListener("message", handleDirectMessage);
+  }, [handlePanoramaChange]);
+
+  // ── 5. Debug: log state on every relevant change ──
+  useEffect(() => {
+    log("State updated:", {
+      hotspotId: currentHotspot?.hotspot_id,
+      hotspotTitle: currentHotspot?.title,
+      panoramaId: currentPanorama?.panorama_id,
+      panoramaTitle: currentPanorama?.title,
+      bgMusicUrl: (currentHotspot as any)?.metadata?.bg_music_url?.substring(0, 60),
+      speechUrl: (currentHotspot as any)?.metadata?.audio_url?.substring(0, 60),
+      panoramasCount: useVRStore.getState().panoramas.length,
+    });
+  }, [currentHotspot, currentPanorama]);
 
   const assetSnapPoints = ["500px", 1];
   const [assetSnap, setAssetSnap] = useState<number | string | null>(
@@ -141,7 +214,7 @@ const VRPage = () => {
           </div>
           {(isLoading || isFadingOut) && (
             <div
-              className={`fixed top-0 left-0 right-0 bottom-0 bg-black  z-50 flex items-center justify-center transition-opacity duration-300 ease-out ${
+              className={`fixed top-0 left-0 right-0 bottom-0 bg-black z-50 flex items-center justify-center transition-opacity duration-300 ease-out ${
                 isFadingOut ? "opacity-0" : "opacity-100"
               }`}
             >

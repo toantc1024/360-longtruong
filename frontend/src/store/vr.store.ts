@@ -62,7 +62,10 @@ const useVRStore = create<VRStore>((set, get) => ({
   setCurrentHotspotById: (hotspot_id: number) => {
     let hotspot = get().getHotspotById(hotspot_id);
     if (hotspot) {
+      console.log("[VRStore] setCurrentHotspotById:", hotspot_id, hotspot.title);
       set({ currentHotspot: hotspot });
+    } else {
+      console.warn("[VRStore] setCurrentHotspotById: hotspot NOT FOUND:", hotspot_id);
     }
   },
   getHotspotById: (hotspot_id: number) => {
@@ -70,11 +73,15 @@ const useVRStore = create<VRStore>((set, get) => ({
     const hotspot = areaHotspots.find(
       (hotspot) => hotspot.hotspot_id === hotspot_id
     );
+    if (!hotspot) {
+      console.warn("[VRStore] getHotspotById: NOT FOUND:", hotspot_id, "available:", areaHotspots.map(h => h.hotspot_id));
+    }
     return hotspot;
   },
   loadData: async () => {
     set({ isLoading: true });
     try {
+      console.log("[VRStore] loadData: fetching area", CURRENT_AREA_ID);
       const currentArea = await getAreaDetailById(CURRENT_AREA_ID);
       const areaHotspots = await getHotspotsByAreaId(CURRENT_AREA_ID);
       const currentHotspot = areaHotspots.find(
@@ -83,6 +90,8 @@ const useVRStore = create<VRStore>((set, get) => ({
       if (!currentHotspot) {
         throw new Error("Main hotspot not found");
       }
+      console.log("[VRStore] loadData: area:", currentArea.area_name, "hotspots:", areaHotspots.length, "main:", currentHotspot.title);
+      console.log("[VRStore] loadData: main hotspot metadata:", currentHotspot.metadata);
       // add 1000 time out for little delay
       await new Promise((resolve) => setTimeout(resolve, 1000));
       set({ currentArea, areaHotspots, currentHotspot, isLoading: false });
@@ -96,9 +105,17 @@ const useVRStore = create<VRStore>((set, get) => ({
     let currentPanorama = panoramas.find(
       (panorama) => panorama.panorama_id === panorama_id
     );
-    // if you do not find the panorama, try to search in the cloud service
-    if (!currentPanorama) {
-      currentPanorama = await getPanoramaByIdFromService(panorama_id);
+    if (currentPanorama) {
+      console.log("[VRStore] getPanoramaById: found in cache:", panorama_id);
+      return currentPanorama;
+    }
+    // Not in local cache — fetch from Supabase
+    console.log("[VRStore] getPanoramaById: not in cache, fetching from service:", panorama_id);
+    currentPanorama = await getPanoramaByIdFromService(panorama_id);
+    if (currentPanorama) {
+      console.log("[VRStore] getPanoramaById: found in service:", panorama_id, "hotspot_id:", currentPanorama.hotspot_id);
+    } else {
+      console.warn("[VRStore] getPanoramaById: NOT FOUND anywhere:", panorama_id);
     }
     return currentPanorama;
   },
@@ -113,6 +130,7 @@ const useVRStore = create<VRStore>((set, get) => ({
   },
   setPanoramasByHotspotId: async (hotspot_id: number) => {
     try {
+      console.log("[VRStore] setPanoramasByHotspotId: fetching for hotspot:", hotspot_id);
       set({ isLoadingPanoramas: true });
       const hotspot = get().getHotspotById(hotspot_id);
       const currentArea = get().currentArea;
@@ -153,6 +171,7 @@ const useVRStore = create<VRStore>((set, get) => ({
         set({
           panoramas: panoramas,
         });
+        console.log("[VRStore] setPanoramasByHotspotId: loaded", panoramas.length, "panoramas for hotspot:", hotspot_id);
 
         let currentPanorama = panoramas.find(
           (panorama) => panorama.panorama_id === hotspot.click_panorama_id
