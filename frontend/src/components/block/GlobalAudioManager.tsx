@@ -12,6 +12,19 @@ export const GlobalAudioManager: React.FC = () => {
   const speechAudioRef = useRef<HTMLAudioElement | null>(null);
   const activeHotspotIdRef = useRef<number | null>(null);
 
+  // Use refs to avoid stale closures in callbacks
+  const isPlayingRef = useRef(isPlaying);
+  const isMutedAllRef = useRef(isMutedAll);
+
+  // Keep refs in sync with state
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
+
+  useEffect(() => {
+    isMutedAllRef.current = isMutedAll;
+  }, [isMutedAll]);
+
   // Background Music URL (Custom background music uploaded for Area)
   const bgMusicUrl = (currentArea as any)?.metadata?.bg_music_url;
 
@@ -79,7 +92,7 @@ export const GlobalAudioManager: React.FC = () => {
         speechAudioRef.current = null;
       }
       // Restore background music volume to normal 0.8 when no speech is active
-      if (bgAudioRef.current && !isMutedAll && isPlaying) {
+      if (bgAudioRef.current && !isMutedAllRef.current && isPlayingRef.current) {
         bgAudioRef.current.volume = 0.8;
         bgAudioRef.current.play().catch(console.warn);
       }
@@ -122,7 +135,8 @@ export const GlobalAudioManager: React.FC = () => {
 
       // When speech finishes, restore background music volume to 0.8
       speech.onended = () => {
-        if (bgAudioRef.current && !isMutedAll && isPlaying) {
+        // Use refs to avoid stale closure
+        if (bgAudioRef.current && !isMutedAllRef.current && isPlayingRef.current) {
           bgAudioRef.current.volume = 0.8;
         }
       };
@@ -230,7 +244,7 @@ export const AudioControlPill: React.FC = () => {
   );
 };
 
-// Top Right Audio Circle Button matching circular top-right toolbar buttons (Search, Map, Chatbot)
+// Top Right Audio Circle Button - Glassmorphism with single icon (Play/Pause)
 export const AudioControlTopRightButton: React.FC = () => {
   const { currentArea, currentHotspot } = useVRStore();
   const { isPlaying, togglePlayPause, isMutedAll } = useAudioStore();
@@ -245,24 +259,14 @@ export const AudioControlTopRightButton: React.FC = () => {
       type="button"
       onClick={togglePlayPause}
       className="w-12 h-12 xl:w-16 xl:h-16 shadow-lg rounded-full glass glass-hover ring-1 ring-black/10 flex items-center justify-center cursor-pointer text-white relative"
-      title={isPlaying ? "Tạm dừng Nhạc nền (Pause)" : "Phát Nhạc nền (Play)"}
+      title={isPlaying ? "Tạm dừng âm thanh (Pause)" : "Phát âm thanh (Play)"}
     >
       {isMutedAll ? (
         <VolumeX className="!size-5 sm:!size-6 xl:!size-8 text-red-400" />
       ) : isPlaying ? (
-        <div className="relative flex items-center justify-center">
-          <Music className="!size-5 sm:!size-6 xl:!size-8 text-blue-300 animate-pulse" />
-          <span className="absolute -bottom-1 -right-1 bg-blue-600 rounded-full p-0.5">
-            <Pause className="w-2.5 h-2.5 fill-white text-white" />
-          </span>
-        </div>
+        <Pause className="!size-5 sm:!size-6 xl:!size-8 text-emerald-400 fill-emerald-400 animate-pulse" />
       ) : (
-        <div className="relative flex items-center justify-center">
-          <Music className="!size-5 sm:!size-6 xl:!size-8 text-white/50" />
-          <span className="absolute -bottom-1 -right-1 bg-emerald-600 rounded-full p-0.5">
-            <Play className="w-2.5 h-2.5 fill-white text-white" />
-          </span>
-        </div>
+        <Play className="!size-5 sm:!size-6 xl:!size-8 text-white fill-white" />
       )}
     </Button>
   );
